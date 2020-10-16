@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+
+  tokenizer:
+    image: clams-tokenizer
+    build:
+      dockerfile: Dockerfile
+      context: ../app-nlp-example
+    ports:
+      - '5001:5000'
+
+  spacy:
+    image: clams-spacy
+    build:
+      dockerfile: Dockerfile
+      context: ../app-spacy-nlp
+    ports:
+      - '5002:5000'

@@ -6,25 +6,31 @@ using docker-compose.yml. See README.md for more details.
 
 Usage:
 
-$ python3 pipeline.py INPUT_FILE APPLICATION*
+$ python3 pipeline.py [OPTIONS] INPATH OUTPATH APPLICATION*
 
-The list of applications should be the names of the services as used in the
-configuration in docker-compose.yml. It may be empty, in which case a default
-list is generated from the config file.
+The INPATH can be a file or a directory, in the latter case all files in the
+directory will be processed. OUTPATH may not exist and will be created. The list
+of applications should be the names of the services as used in the configuration
+in docker-compose.yml. It may be empty, in which case a default list is created
+from the config file, using the port number to order the services.
 
 Examples:
 
-$ python pipeline.py example-mmif.json
-$ python pipeline.py example-mmif.json tokenizer spacy
+$ python pipeline.py example-mmif.json example-mmif-out.json
+$ python pipeline.py example-mmif.json example-mmif-out.json tokenizer spacy
 
-The first one runs all the services define in docker-compose.yml ordered on port
-number.
+OPTIONS:
+  -h, --help           prints help message and exits
+  -v, --verbose        prints some progress messages to standard output
+  -i, --intermediate   writes intermediate files as well
 
 """
 
+import os
 import sys
 import json
 import yaml
+import argparse
 from operator import itemgetter
 
 import requests
@@ -33,8 +39,8 @@ import requests
 class Services(object):
 
     """Holds the names of services and their URLs, where the names and URLs are
-    taken from a docker compose configuraiton file."""
-    
+    taken from a docker compose configuration file."""
+
     def __init__(self, fname):
         """Build a dictionary of service names and their URL."""
         with open(fname, 'r') as fh:
@@ -43,8 +49,7 @@ class Services(object):
         services = specs['services']
         for service in services:
             port = services[service]['ports'][0].split(':')[0]
-            url = 'http://0.0.0.0:%s/' % port
-            self.services[service] = url
+            self.services[service] = 'http://0.0.0.0:%s/' % port
 
     def __getitem__(self, i):
         return self.services[i]
@@ -77,36 +82,72 @@ class Services(object):
 
 class Pipeline(object):
 
-    def __init__(self, services, pipeline=None):
-        self.services = services
-        if pipeline is None:
-            self.pipeline = self.services.service_names()
-        else:
-            self.pipeline = pipeline
+    """To create a pipeline you first collect all services from the docker compose
+    configuration file and then set the pipeline, generate the pipeline from the
+    configuration if the pipeline handed in is the empty list."""
+
+    def __init__(self, pipeline):
+        self.services = Services('docker-compose.yml')
+        self.pipeline = pipeline if pipeline else self.services.service_names()
 
     def __str__(self):
-        return "<Pipeline %s on %s>" % ('|'.join(self.pipeline), self.services)
+        return "<Pipeline %s>" % ('|'.join(self.pipeline))
 
-    def run(self, fname):
-        mmif_string = open(fname).read()
+    def run(self, in_path, out_path, verbose=False, intermediate=False):
+        self.verbose = verbose
+        self.intermediate = intermediate
+        if os.path.exists(out_path):
+            exit("ERROR: output file or directory already exist, exiting...")
+        if os.path.isfile(in_path):
+            self.run_on_file(in_path, out_path)
+        elif os.path.isdir(in_path):
+            os.mkdir(out_path)
+            for fname in os.listdir(in_path):
+                infile = os.path.join(in_path, fname)
+                outfile = os.path.join(out_path, fname)
+                if os.path.isfile(infile):
+                    try:
+                        self.run_on_file(infile, outfile)
+                    except Exception as e:
+                        print("WARNING: error on '%s': %s" % (fname, e))
+
+    def run_on_file(self, infile, outfile):
+        if self.verbose:
+            print('Processing %s' % infile)
+        mmif_string = open(infile).read()
         result = None
         step = 0
         for service in self.pipeline:
-            print("Running %s" % service)
+            if self.verbose:
+                print("...running %s" % service)
             step += 1
             input_string = mmif_string if result is None else result
             # not using the metadata at the moment
             # metadata = self.services.metadata(service)
-            result = services.run(service, input_string)
+            result = self.services.run(service, input_string)
             result = input_string if result is None else result
-            with open("out-%d-%s.json" % (step, service), 'w') as fh:
-                fh.write(result)
+            if self.intermediate:
+                out = outfile[:-5] if outfile.endswith('.json') else outfile
+                with open("%s-%d-%s.json" % (out, step, service), 'w') as fh:
+                    fh.write(result)
+        with open(outfile, 'w') as fh:
+            fh.write(result)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("INPUT", help="the input file or directory")
+    parser.add_argument("OUTPUT", help="the output file or directory")
+    parser.add_argument("PIPELINE", nargs='*', help="optional pipeline elements")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="print some progress messages to standard output")
+    parser.add_argument("-i", "--intermediate", action="store_true",
+                        help="save intermediate files")
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
 
-    input_file = sys.argv[1]
-    pipeline = sys.argv[2:] if len(sys.argv) > 2 else None
-    services = Services('docker-compose.yml')
-    pipeline = Pipeline(services, pipeline)
-    pipeline.run(input_file)
+    args = parse_arguments()
+    pipeline = Pipeline(args.PIPELINE)
+    pipeline.run(args.INPUT, args.OUTPUT, args.verbose, args.intermediate)

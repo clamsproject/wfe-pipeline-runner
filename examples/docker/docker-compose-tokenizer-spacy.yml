@@ -7,6 +7,8 @@ services:
     build:
       dockerfile: Dockerfile
       context: ../app-nlp-example
+    volumes:
+      - "/data/clams/examples:/data"
     ports:
       - '5001:5000'
 
@@ -15,5 +17,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: ../app-spacy-nlp
+    volumes:
+      - "/data/clams/examples:/data"
     ports:
       - '5002:5000'

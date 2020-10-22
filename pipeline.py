@@ -36,6 +36,10 @@ from operator import itemgetter
 import requests
 
 
+# default docker compose file
+CONFIGURATION_FILE = 'docker-compose.yml'
+
+
 class Services(object):
 
     """Holds the names of services and their URLs, where the names and URLs are
@@ -86,8 +90,9 @@ class Pipeline(object):
     configuration file and then set the pipeline, generate the pipeline from the
     configuration if the pipeline handed in is the empty list."""
 
-    def __init__(self, pipeline):
-        self.services = Services('docker-compose.yml')
+    def __init__(self, pipeline, dockerfile=None):
+        config_file = CONFIGURATION_FILE if dockerfile is None else dockerfile
+        self.services = Services(config_file)
         self.pipeline = pipeline if pipeline else self.services.service_names()
 
     def __str__(self):
@@ -140,14 +145,16 @@ def parse_arguments():
     parser.add_argument("OUTPUT", help="the output file or directory")
     parser.add_argument("PIPELINE", nargs='*', help="optional pipeline elements")
     parser.add_argument("-v", "--verbose", action="store_true",
-                        help="print some progress messages to standard output")
+                        help="print progress messages to standard output")
     parser.add_argument("-i", "--intermediate", action="store_true",
                         help="save intermediate files")
+    parser.add_argument("--config", dest="config_file",
+                        help="alternative docker-compose file")
     return parser.parse_args()
 
 
 if __name__ == '__main__':
 
     args = parse_arguments()
-    pipeline = Pipeline(args.PIPELINE)
+    pipeline = Pipeline(args.PIPELINE, args.config_file)
     pipeline.run(args.INPUT, args.OUTPUT, args.verbose, args.intermediate)

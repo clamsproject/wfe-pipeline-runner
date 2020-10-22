@@ -8,7 +8,7 @@
       "properties": {
         "id": "m1",
         "mime": "video/mpeg",
-        "location": "example-video.mp4"
+        "location": "/data/video/dummy.mp4"
       }
     },
     {
@@ -16,7 +16,7 @@
       "properties": {
         "id": "m2",
         "mime": "text/plain",
-        "location": "example-transcript.txt"
+        "location": "/data/text/east-tesseract.txt"
       }
     }
   ],

@@ -1,3 +1,5 @@
 *~
 __pycache__
-docker-compose.yml
+
+# not interested in any compose configuration files for personal use
+docker-compose*.yml

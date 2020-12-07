@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+
+  slate:
+    container_name: clams_slate
+    image: clams-slate-detector
+    build:
+      dockerfile: Dockerfile
+      context: ../app-slatedetection
+    volumes:
+      - "/private/var/archive:/data"
+    ports:
+      - '5001:5000'
+
+  tesseract:
+    container_name: clams_tesseract
+    image: clams-tesseract
+    build:
+      dockerfile: Dockerfile
+      context: ../app-tesseractocr-wrapper
+    volumes:
+      - "/private/var/archive:/data"
+    ports:
+      - '5002:5000'
+
+  prettifier:
+    container_name: clams_prettifier
+    image: clams-mmif-prettifier
+    build:
+      dockerfile: Dockerfile
+      context: ../app-mmif-prettifier
+    volumes:
+      - "/private/var/archive:/data"
+    ports:
+      - '5003:5000'

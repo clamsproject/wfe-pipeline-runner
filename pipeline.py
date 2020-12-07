@@ -21,19 +21,20 @@ $ python pipeline.py example-mmif.json example-mmif-out.json tokenizer spacy
 
 OPTIONS:
   -h, --help           prints help message and exits
-  -v, --verbose        prints some progress messages to standard output
-  -i, --intermediate   writes intermediate files as well
+  -v, --verbose        prints progress to standard output
+  -i, --intermediate   writes intermediate files
 
 """
 
 import os
 import sys
+import shutil
 import json
 import yaml
-import argparse
 from operator import itemgetter
 
 import requests
+import argparse
 
 
 # default docker compose file
@@ -53,7 +54,16 @@ class Services(object):
         services = specs['services']
         for service in services:
             port = services[service]['ports'][0].split(':')[0]
-            self.services[service] = 'http://0.0.0.0:%s/' % port
+            # Skipping the pipeline service, it should definitely not run as a
+            # step in the pipeline.
+            if port == '5000':
+                continue
+            # URL depends on whether the service runs in a container or not, so
+            # here we give a pair with the first element reflecting the URL when
+            # running outside a container and the second the URL from the
+            # pipeline script running inside a container.
+            self.services[service] = ('http://0.0.0.0:%s/' % port,
+                                      'http://clams_%s:5000/' % service)
 
     def __getitem__(self, i):
         return self.services[i]
@@ -61,21 +71,28 @@ class Services(object):
     def __str__(self):
         return "<Services %s>" % ','.join(self.service_names())
 
+    def get_url(self, service_name):
+        if runs_in_container():
+            return self.services[service_name][1]
+        else:
+            return self.services[service_name][0]
+
     def service_names(self):
         """Returns service names sorted on port number."""
         return [k for k,v in sorted(self.services.items(), key=itemgetter(1))]
 
     def metadata(self, service_name):
-        url = self.services[service_name]
+        url = self.get_url(service_name)
         try:
             response = requests.get(url)
-            return response.json()
+            # TODO: using json() gives an error for reasons I do not yet understand
+            return response.text
         except requests.exceptions.ConnectionError as e:
             print(">>> WARNING: error connecting to %s, returning empty metadata" % url)
             return {}
 
     def run(self, service_name, input_string):
-        url = self.services.get(service_name)
+        url = self.get_url(service_name)
         try:
             response = requests.put(url, data=input_string)
             return response.text
@@ -127,7 +144,7 @@ class Pipeline(object):
                 print("...running %s" % service)
             step += 1
             input_string = mmif_string if result is None else result
-            # not using the metadata at the moment
+            # not using the metadata for now
             # metadata = self.services.metadata(service)
             result = self.services.run(service, input_string)
             result = input_string if result is None else result
@@ -139,13 +156,21 @@ class Pipeline(object):
             fh.write(result)
 
 
+def runs_in_container():
+    """Returns True if this script is running inside a container, return False
+    otherwise. Relies on the fact that the container itself does not have docker
+    or docker-compose, whereas if we run the pipeline script outside of the
+    container we know it relies on those."""
+    return shutil.which('docker') is None
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("INPUT", help="the input file or directory")
     parser.add_argument("OUTPUT", help="the output file or directory")
     parser.add_argument("PIPELINE", nargs='*', help="optional pipeline elements")
     parser.add_argument("-v", "--verbose", action="store_true",
-                        help="print progress messages to standard output")
+                        help="print progress to standard output")
     parser.add_argument("-i", "--intermediate", action="store_true",
                         help="save intermediate files")
     parser.add_argument("--config", dest="config_file",

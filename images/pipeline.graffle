@@ -46,7 +46,7 @@
 	<key>Creator</key>
 	<string>Marc Verhagen</string>
 	<key>DisplayScale</key>
-	<string>1 0/72 in = 1 0/72 in</string>
+	<string>1 0/72 in = 1.0000 in</string>
 	<key>GraphDocumentVersion</key>
 	<integer>8</integer>
 	<key>GraphicsList</key>
@@ -526,8 +526,7 @@ request}</string>
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
 \f0\fs20 \cf0 HTTP \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
-\cf0 request}</string>
+request}</string>
 				<key>VerticalPad</key>
 				<integer>0</integer>
 			</dict>
@@ -585,8 +584,8 @@ request}</string>
 			<integer>30</integer>
 			<key>Points</key>
 			<array>
-				<string>{233.81208539016191, 290.25009863885833}</string>
-				<string>{232.16802774806263, 207.49990136142188}</string>
+				<string>{233.81208804674515, 290.25009863885663}</string>
+				<string>{232.16804436236538, 207.49990136114334}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -1059,10 +1058,8 @@ request}</string>
 \f0\b\fs20 \cf0 /data
 \f1\b0 \
     /video/927364.mp4\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf0     /text/927364.txt\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
-\cf0     /audio\
+    /text/927364.txt\
+    /audio\
     /image}</string>
 			</dict>
 			<key>TextPlacement</key>
@@ -1174,29 +1171,28 @@ request}</string>
 				<data>
 				BAtzdHJlYW10eXBlZIHoA4QBQISEhBJOU0F0dHJpYnV0
 				ZWRTdHJpbmcAhIQITlNPYmplY3QAhZKEhIQITlNTdHJp
-				bmcBlIQBK4HQAHsKICAibWV0YWRhdGEiOiB7fSwKICAi
+				bmcBlIQBK4HPAHsKICAibWV0YWRhdGEiOiB7fSwKICAi
 				ZG9jdW1lbnRzIjogWwogICAgeyAiQHR5cGUiOiAiVmlk
 				ZW9Eb2N1bWVudCIsCiAgICAgICJsb2NhdGlvbiI6ICIv
-				ZGF0YS92aWRlby85MjczNjQuanNvbiIgfSwKICAgIHsg
-				IkB0eXBlIjogIlRleHREb2N1bWVudCIsCiAgICAgICJs
-				b2NhdGlvbiI6ICIvZGF0YS90ZXh0LzkyNzM2NC50eHQi
-				IH1dLAogICJ2aWV3cyI6IFtdCn2GhAJpSQERkoSEhAxO
-				U0RpY3Rpb25hcnkAlIQBaQSShJaWDk5TT3JpZ2luYWxG
-				b250hpKEhIQGTlNGb250HpSZGIQFWzI0Y10GAAAAEAAA
-				AP/+QwBvAHUAcgBpAGUAcgCEAWYIhAFjAJ0BnQCdAIaS
-				hJaWEE5TUGFyYWdyYXBoU3R5bGWGkoSEhBdOU011dGFi
-				bGVQYXJhZ3JhcGhTdHlsZQCEhBBOU1BhcmFncmFwaFN0
-				eWxlAJSEBENDQFMAAISEhAdOU0FycmF5AJSZDJKEhIQJ
-				TlNUZXh0VGFiAJSEAkNmAByGkoSjowA4hpKEo6MAVIaS
-				hKOjAHCGkoSjowCBjACGkoSjowCBqACGkoSjowCBxACG
-				koSjowCB4ACGkoSjowCB/ACGkoSjowCBGAGGkoSjowCB
-				NAGGkoSjowCBUAGGhoEACIQEWzFmXYPNzEw9hpKElpYG
-				TlNGb250hpKakoSWlgdOU0NvbG9yhpKEhIQHTlNDb2xv
-				cgCUnQaEA0BAQISWlgZTeXN0ZW2GhJaWCXRleHRDb2xv
-				coaEsp0DhAJmZgABhoaGlwICkoSYmQOSsJKxkpySnZKv
-				kpqGlwFFlwMXkoSYmQSSmZKEm5kkhAVbMzZjXQYAAAAa
-				AAAA//5DAG8AdQByAGkAZQByAC0AQgBvAGwAZAAAAJwI
-				nQCdAZ0AnQCGkpySnZKvkriSsJKxhpcBN5cDFZcBFYY=
+				ZGF0YS92aWRlby85MjczNjQubXA0IiB9LAogICAgeyAi
+				QHR5cGUiOiAiVGV4dERvY3VtZW50IiwKICAgICAgImxv
+				Y2F0aW9uIjogIi9kYXRhL3RleHQvOTI3MzY0LnR4dCIg
+				fV0sCiAgInZpZXdzIjogW10KfYaEAmlJAViShISEDE5T
+				RGljdGlvbmFyeQCUhAFpA5KElpYHTlNDb2xvcoaShISE
+				B05TQ29sb3IAlIQBYwaEA0BAQISWlgZTeXN0ZW2GhJaW
+				CXRleHRDb2xvcoaEm5sDhAJmZgABhoaShJaWEE5TUGFy
+				YWdyYXBoU3R5bGWGkoSEhBdOU011dGFibGVQYXJhZ3Jh
+				cGhTdHlsZQCEhBBOU1BhcmFncmFwaFN0eWxlAJSEBEND
+				QFMAAISEhAdOU0FycmF5AJSZDJKEhIQJTlNUZXh0VGFi
+				AJSEAkNmAByGkoSmowA4hpKEpqMAVIaShKajAHCGkoSm
+				owCBjACGkoSmowCBqACGkoSmowCBxACGkoSmowCB4ACG
+				koSmowCB/ACGkoSmowCBGAGGkoSmowCBNAGGkoSmowCB
+				UAGGhoEACIQEWzFmXYPNzEw9hpKElpYGTlNGb250hpKE
+				hIQGTlNGb250HpSZGIQFWzI0Y10GAAAAEAAAAP/+QwBv
+				AHUAcgBpAGUAcgCEAWYImwCbAZsAmwCGhpcCFpKEmJkD
+				kpmSmpKfkqCSspKEtJkkhAVbMzZjXQYAAAAaAAAA//5D
+				AG8AdQByAGkAZQByAC0AQgBvAGwAZAAAAKcImwCbAZsA
+				mwCGhpcBN5cCFZcBFYY=
 				</data>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
@@ -1209,7 +1205,7 @@ request}</string>
   "documents": [\
     \{ "@type": "VideoDocument",\
       "location": "
-\f1\b /data/video/927364.json
+\f1\b /data/video/927364.mp4
 \f0\b0 " \},\
     \{ "@type": "TextDocument",\
       "location": "
@@ -1281,7 +1277,7 @@ request}</string>
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
-\f0\b\fs20 \cf0 /data/clams/examples
+\f0\b\fs20 \cf0 /data/clams/archive
 \f1\b0 \
     /video/927364.mp4\
     /text/927364.txt\
@@ -1364,7 +1360,7 @@ request}</string>
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2020-10-22 14:58:00 +0000</string>
+	<string>2020-12-07 17:25:01 +0000</string>
 	<key>Modifier</key>
 	<string>Marc Verhagen</string>
 	<key>NotesVisible</key>

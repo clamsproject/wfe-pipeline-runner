@@ -1,5 +1,6 @@
+.DS_Store
 *~
 __pycache__
 
 # not interested in any compose configuration files for personal use
-docker-compose*.yml
+/docker-compose*.yml

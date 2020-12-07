@@ -2,6 +2,20 @@ version: '3'
 
 services:
 
+  pipeline:
+    container_name: clams_pipeline
+    image: clams-pipeline
+    build:
+      dockerfile: Dockerfile
+      context: ../pipeline-runner
+    stdin_open: true
+    tty: true
+    volumes:
+      - "/private/var/archive:/data"
+      - "./:/app/host"
+    ports:
+      - '5000:5000'
+
   tokenizer:
     image: clams-tokenizer
     build:

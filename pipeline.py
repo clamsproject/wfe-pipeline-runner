@@ -157,10 +157,10 @@ class Pipeline(object):
 
 
 def runs_in_container():
-    """Returns True if this script is running inside a container, return False
-    otherwise. Relies on the fact that the container itself does not have docker
-    or docker-compose, whereas if we run the pipeline script outside of the
-    container we know it relies on those."""
+    """Returns True if a 'docker' executable is present; false otherwise. This
+       is a simple test to determine if we are running in a container or not,
+       assuming that 'docker' WILL be present when not inside the container
+       and WILL NOT be present if we are inside the container."""
     return shutil.which('docker') is None
 
 

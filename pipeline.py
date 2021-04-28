@@ -40,6 +40,11 @@ import argparse
 # default docker compose file
 CONFIGURATION_FILE = 'docker-compose.yml'
 
+# prefix for the container name
+CONTAINER_PREFIX = 'pipeline_'
+
+PIPELINE_SERVICE = 'pipeline'
+
 
 class Services(object):
 
@@ -53,17 +58,17 @@ class Services(object):
         self.services = {}
         services = specs['services']
         for service in services:
-            port = services[service]['ports'][0].split(':')[0]
-            # Skipping the pipeline service, it should definitely not run as a
+            # Skipping the pipeline service itself since it should not run as a
             # step in the pipeline.
-            if port == '5000':
+            if service == PIPELINE_SERVICE:
                 continue
+            port = services[service]['ports'][0].split(':')[0]
             # URL depends on whether the service runs in a container or not, so
             # here we give a pair with the first element reflecting the URL when
             # running outside a container and the second the URL from the
             # pipeline script running inside a container.
             self.services[service] = ('http://0.0.0.0:%s/' % port,
-                                      'http://clams_%s:5000/' % service)
+                                      'http://%s%s:5000/' % (CONTAINER_PREFIX, service))
 
     def __getitem__(self, i):
         return self.services[i]
@@ -72,7 +77,9 @@ class Services(object):
         return "<Services %s>" % ','.join(self.service_names())
 
     def get_url(self, service_name):
-        if runs_in_container():
+        """Return the URL for the service, keeping in mind that the URL is different
+        depending on whether you run from inside a container or from the host."""
+        if host_mode():
             return self.services[service_name][1]
         else:
             return self.services[service_name][0]
@@ -156,11 +163,13 @@ class Pipeline(object):
             fh.write(result)
 
 
-def runs_in_container():
+def host_mode():
     """Returns True if a 'docker' executable is present; false otherwise. This
-       is a simple test to determine if we are running in a container or not,
-       assuming that 'docker' WILL be present when not inside the container
-       and WILL NOT be present if we are inside the container."""
+    is a simple heuristic to determine if we are running in a container or not,
+    assuming that the 'docker' command WILL NOT be present when we are inside a
+    container and WILL be present if we are on the host."""
+    # NOTE: others suggested to check for the presence of the /.dockerenv file
+    # TODO: maybe use a command line option to distinguish between the two cases
     return shutil.which('docker') is None
 
 
@@ -182,4 +191,6 @@ if __name__ == '__main__':
 
     args = parse_arguments()
     pipeline = Pipeline(args.PIPELINE, args.config_file)
+    print(pipeline)
+    print(pipeline.services.services)
     pipeline.run(args.INPUT, args.OUTPUT, args.verbose, args.intermediate)

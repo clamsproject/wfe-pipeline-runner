@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+
+  tokenizer:
+    container_name: pipeline_tokenizer
+    image: clams-nlp-example
+    build:
+      dockerfile: Dockerfile
+      context: ../app-nlp-example
+    volumes:
+      - "${PWD}/examples/data:/data"
+    ports:
+      - '5001:5000'
+
+  spacy:
+    container_name: pipeline_spacy
+    image: clams-spacy-nlp
+    build:
+      dockerfile: Dockerfile
+      context: ../app-spacy-nlp
+    volumes:
+      - "${PWD}/examples/data:/data"
+    ports:
+      - '5002:5000'
+
+  pipeline:
+    container_name: pipeline
+    image: clams-pipeline
+    stdin_open: true
+    tty: true
+    volumes:
+      - "${PWD}/examples/data:/data"
+      - "./:/app/host"
+    ports:
+      - '5000:5000'

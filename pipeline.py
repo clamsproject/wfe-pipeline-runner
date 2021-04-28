@@ -51,6 +51,7 @@ class Services(object):
         with open(fname, 'r') as fh:
             specs = yaml.safe_load(fh)
         self.services = {}
+        self.params = {}
         services = specs['services']
         for service in services:
             port = services[service]['ports'][0].split(':')[0]
@@ -64,6 +65,7 @@ class Services(object):
             # pipeline script running inside a container.
             self.services[service] = ('http://0.0.0.0:%s/' % port,
                                       'http://clams_%s:5000/' % service)
+            self.params[service] = services[service].get("parameters", {})
 
     def __getitem__(self, i):
         return self.services[i]
@@ -76,6 +78,9 @@ class Services(object):
             return self.services[service_name][1]
         else:
             return self.services[service_name][0]
+
+    def get_params(self, service_name):
+        return self.params[service_name]
 
     def service_names(self):
         """Returns service names sorted on port number."""
@@ -93,8 +98,9 @@ class Services(object):
 
     def run(self, service_name, input_string):
         url = self.get_url(service_name)
+        params = self.get_params(service_name)
         try:
-            response = requests.put(url, data=input_string)
+            response = requests.put(url, data=input_string, params=params)
             return response.text
         except requests.exceptions.ConnectionError as e:
             print(">>> WARNING: error connecting to %s, returning input MMIF" % url)

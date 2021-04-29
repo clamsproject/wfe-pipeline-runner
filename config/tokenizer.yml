@@ -8,6 +8,3 @@ services:
   - tokenizer:
       image: clams-nlp-example
       container: pipeline_tokenizer
-  - spacy:
-      image: clams-spacy-nlp
-      container: pipeline_spacy

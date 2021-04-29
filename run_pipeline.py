@@ -2,27 +2,38 @@
 
 Running a pipeline of CLAMS applications from the command line. Assumes that
 appplications are up and running as Fask services and that they were started
-using docker-compose.yml. See README.md for more details.
+using start_pipeline.py, which takes a configuration file as input. After that
+script ran there should be two configuration files, both in the top-level
+directory:
+
+- config.py
+- docker-compose.py
+
+These files are used by this script to gather information about the services.
+
+See README.md for more details.
 
 Usage:
 
-$ python3 pipeline.py [OPTIONS] INPATH OUTPATH APPLICATION*
+$ python3 run_pipeline.py [OPTIONS] INPATH OUTPATH APPLICATION*
 
 The INPATH can be a file or a directory, in the latter case all files in the
-directory will be processed. OUTPATH may not exist and will be created. The list
-of applications should be the names of the services as used in the configuration
-in docker-compose.yml. It may be empty, in which case a default list is created
-from the config file, using the port number to order the services.
+directory will be processed. OUTPATH may not exist and will be created. The
+names in the list of applications should be the names of the services as used in
+the configuration file handed to start_pipeline.py (and saved as config.py). The
+applications list may be empty, in which case a default list is created from the
+config file, using the port number to order the services.
 
 Examples:
 
-$ python pipeline.py example-mmif.json example-mmif-out.json
-$ python pipeline.py example-mmif.json example-mmif-out.json tokenizer spacy
+$ python run_pipeline.py examples/mmif/tokenizer-spacy-1.json out.json
+$ python run_pipeline.py examples/mmiftokenizer-spacy-1.json out.json tokenizer spacy
 
 OPTIONS:
-  -h, --help           prints help message and exits
-  -v, --verbose        prints progress to standard output
-  -i, --intermediate   writes intermediate files
+  -h, --help           show this help message and exit
+  -v, --verbose        print progress to standard output
+  -i, --intermediate   save intermediate files
+  --params PARAMETERS  parmaters for the pipeline components
 
 """
 
@@ -31,19 +42,14 @@ import sys
 import shutil
 import json
 import yaml
-from operator import itemgetter
-
 import requests
 import argparse
+from operator import itemgetter
 
 
-# default docker compose file
-CONFIGURATION_FILE = 'docker-compose.yml'
-
-# prefix for the container name
-CONTAINER_PREFIX = 'pipeline_'
-
-PIPELINE_SERVICE = 'pipeline'
+# configuration files
+CONFIG_FILE = 'config.yml'
+COMPOSE_FILE = 'docker-compose.yml'
 
 
 class Services(object):
@@ -51,30 +57,42 @@ class Services(object):
     """Holds the names of services and their URLs, where the names and URLs are
     taken from a docker compose configuration file."""
 
-    def __init__(self, fname):
-        """Build a dictionary of service names and their URL."""
-        with open(fname, 'r') as fh:
-            specs = yaml.safe_load(fh)
-        self.services = {}
-        self.params = {}
-        services = specs['services']
-        for service in services:
-            # Skipping the pipeline service itself since it should not run as a
-            # step in the pipeline.
-            if service == PIPELINE_SERVICE:
-                continue
-            port = services[service]['ports'][0].split(':')[0]
+    def __init__(self, parameters):
+        """Build a dictionary of service names and their URLs."""
+        with open(COMPOSE_FILE, 'r') as fh1, open(CONFIG_FILE, 'r') as fh2:
+            compose_specs = yaml.safe_load(fh1)
+            config_specs = yaml.safe_load(fh2)
+        self.service_urls = {}
+        self.service_params = {}
+        self._set_service_urls(config_specs, compose_specs)
+        self._set_service_params(config_specs, parameters)
+
+    def _set_service_urls(self, config_specs, compose_specs):
+        for service in config_specs['services']:
+            name, specs = list(service.items())[0]
+            port = compose_specs['services'][name]['ports'][0].split(':')[0]
             # URL depends on whether the service runs in a container or not, so
             # here we give a pair with the first element reflecting the URL when
             # running outside a container and the second the URL from the
             # pipeline script running inside a container.
-            self.services[service] = ('http://0.0.0.0:%s/' % port,
-                                      'http://%s%s:5000/' % (CONTAINER_PREFIX, service))
-                                      'http://clams_%s:5000/' % service)
-            self.params[service] = services[service].get("parameters", {})
+            self.service_urls[name] = (
+                'http://0.0.0.0:%s/' % port,
+                'http://%s:5000/' % specs['container'])
 
-    def __getitem__(self, i):
-        return self.services[i]
+    def _set_service_params(self, config_specs, parameters):
+        for service in config_specs['services']:
+            service_name = list(service.keys())[0]
+            service_params = service[service_name].get('parameters', {})
+            self.service_params[service_name] = service_params
+        if parameters is not None:
+            for parameter in parameters.split(','):
+                try:
+                    name, value = parameter.split('=')
+                    component, name = name.split('-', 1)
+                    print(component, name, value)
+                    self.service_params.setdefault(component, {})[name] = value
+                except IndexError:
+                    pass
 
     def __str__(self):
         return "<Services %s>" % ','.join(self.service_names())
@@ -83,16 +101,16 @@ class Services(object):
         """Return the URL for the service, keeping in mind that the URL is different
         depending on whether you run from inside a container or from the host."""
         if host_mode():
-            return self.services[service_name][1]
+            return self.service_urls[service_name][1]
         else:
-            return self.services[service_name][0]
+            return self.service_urls[service_name][0]
 
     def get_params(self, service_name):
-        return self.params[service_name]
+        return self.service_params[service_name]
 
     def service_names(self):
         """Returns service names sorted on port number."""
-        return [k for k,v in sorted(self.services.items(), key=itemgetter(1))]
+        return [k for k,v in sorted(self.service_urls.items(), key=itemgetter(1))]
 
     def metadata(self, service_name):
         url = self.get_url(service_name)
@@ -121,9 +139,8 @@ class Pipeline(object):
     configuration file and then set the pipeline, generate the pipeline from the
     configuration if the pipeline handed in is the empty list."""
 
-    def __init__(self, pipeline, dockerfile=None):
-        config_file = CONFIGURATION_FILE if dockerfile is None else dockerfile
-        self.services = Services(config_file)
+    def __init__(self, pipeline, parameters=None):
+        self.services = Services(parameters)
         self.pipeline = pipeline if pipeline else self.services.service_names()
 
     def __str__(self):
@@ -132,6 +149,8 @@ class Pipeline(object):
     def run(self, in_path, out_path, verbose=False, intermediate=False):
         self.verbose = verbose
         self.intermediate = intermediate
+        if not os.path.exists(in_path):
+            exit("ERROR: input file or directory does not exist, exiting...")
         if os.path.exists(out_path):
             exit("ERROR: output file or directory already exist, exiting...")
         if os.path.isfile(in_path):
@@ -189,15 +208,13 @@ def parse_arguments():
                         help="print progress to standard output")
     parser.add_argument("-i", "--intermediate", action="store_true",
                         help="save intermediate files")
-    parser.add_argument("--config", dest="config_file",
-                        help="alternative docker-compose file")
+    parser.add_argument("--params", dest="parameters",
+                        help="parmaters for the pipeline components")
     return parser.parse_args()
 
 
 if __name__ == '__main__':
 
     args = parse_arguments()
-    pipeline = Pipeline(args.PIPELINE, args.config_file)
-    print(pipeline)
-    print(pipeline.services.services)
+    pipeline = Pipeline(args.PIPELINE, args.parameters)
     pipeline.run(args.INPUT, args.OUTPUT, args.verbose, args.intermediate)

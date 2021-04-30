@@ -292,3 +292,52 @@ drwxr-xr-x 3 root root    4096 Apr 29 15:44 examples
 -rw-r--r-- 1 root root    2945 Apr 29 15:05 start_pipeline.py
 ```
 
+
+
+### 4.  Handing parameters to applications
+
+Application can take parameters and of course differ as to what parameters they take. We allow the initial configuration file to include parameters. For example, instead of `config/tokenizer-spacy.yml` we can use `config/tokenizer-spacy-params.yml` which looks as follows.
+
+```yaml
+data: ${PWD}/examples/data
+
+pipeline:
+  image: clams-pipeline
+  container: pipeline
+
+services:
+  - tokenizer:
+      image: clams-nlp-example
+      container: pipeline_tokenizer
+      parameters:
+        eol: False
+  - spacy:
+      image: clams-spacy-nlp
+      container: pipeline_spacy
+      parameters:
+        pretty: True
+```
+
+Added here are two parameters, one for the tokenizer and one for spaCy. With this you would still use `start_pipeline.py` and `run_pipeline.py` as before, and with the latter all the parameters in the configuration file will be handed in to the application. You can also edit the `config.yml` before you run `run_pipeline.py` and the updated parameters will be handed in.
+
+You can also overrule parameters in `config.py` by using command line arguments. 
+
+```
+$ python run_pipeline.py -iv --params tokenizer-eol=True examples/mmif/tokenizer-spacy-1.json out.json
+```
+
+ On the command line, parameters are added as a comma-separated string where all elements have the following syntaxt.
+
+```
+SERVICE_NAME-PARAMETER=VALUE
+```
+
+So you can do things like
+
+```
+--params tokenizer-eol=True
+--params tokenizer-eol=True,tokenizer-pretty=True,spacy-linking=False
+```
+
+The `pretty` parameter can be used for any component and results in the output JSON being pretty printed.
+

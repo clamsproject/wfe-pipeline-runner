@@ -22,7 +22,7 @@ directory will be processed. OUTPATH may not exist and will be created. The
 names in the list of applications should be the names of the services as used in
 the configuration file handed to start_pipeline.py (and saved as config.py). The
 applications list may be empty, in which case a default list is created from the
-config file, using the port number to order the services.
+config file.
 
 Examples:
 
@@ -33,7 +33,9 @@ OPTIONS:
   -h, --help           show this help message and exit
   -v, --verbose        print progress to standard output
   -i, --intermediate   save intermediate files
-  --params PARAMETERS  parmaters for the pipeline components
+  --params PARAMETERS  parameters for the pipeline components
+
+See README.md for more details, including on the --params option.
 
 """
 
@@ -52,81 +54,48 @@ CONFIG_FILE = 'config.yml'
 COMPOSE_FILE = 'docker-compose.yml'
 
 
-class Services(object):
+class Service(object):
 
-    """Holds the names of services and their URLs, where the names and URLs are
-    taken from a docker compose configuration file."""
-
-    def __init__(self, parameters):
-        """Build a dictionary of service names and their URLs."""
-        with open(COMPOSE_FILE, 'r') as fh1, open(CONFIG_FILE, 'r') as fh2:
-            compose_specs = yaml.safe_load(fh1)
-            config_specs = yaml.safe_load(fh2)
-        self.service_urls = {}
-        self.service_params = {}
-        self._set_service_urls(config_specs, compose_specs)
-        self._set_service_params(config_specs, parameters)
-
-    def _set_service_urls(self, config_specs, compose_specs):
-        for service in config_specs['services']:
-            name, specs = list(service.items())[0]
-            port = compose_specs['services'][name]['ports'][0].split(':')[0]
-            # URL depends on whether the service runs in a container or not, so
-            # here we give a pair with the first element reflecting the URL when
-            # running outside a container and the second the URL from the
-            # pipeline script running inside a container.
-            self.service_urls[name] = (
-                'http://0.0.0.0:%s/' % port,
-                'http://%s:5000/' % specs['container'])
-
-    def _set_service_params(self, config_specs, parameters):
-        for service in config_specs['services']:
-            service_name = list(service.keys())[0]
-            service_params = service[service_name].get('parameters', {})
-            self.service_params[service_name] = service_params
+    def __init__(self, name, specs, compose_specs, parameters):
+        self.name = name
+        self.specs = specs
+        self.image = specs['image']
+        self.container = specs['container']
+        self.port = compose_specs['ports'][0].split(':')[0]
+        self.url = self._get_url()
+        self.parameters = specs['parameters']
         if parameters is not None:
             for parameter in parameters.split(','):
-                try:
-                    name, value = parameter.split('=')
-                    component, name = name.split('-', 1)
-                    print(component, name, value)
-                    self.service_params.setdefault(component, {})[name] = value
-                except IndexError:
-                    pass
+                name, value = parameter.split('=')
+                component, name = name.split('-', 1)
+                self.parameters[name] = value
+
+    def _get_url(self):
+        # The URL depends on whether the pipeline service runs in a container,
+        # so we check whether we are in host mode and set the URL accordingly.
+        if host_mode():
+            return 'http://0.0.0.0:%s/' % self.port
+        else:
+            return 'http://%s:5000/' % self.specs['container']
 
     def __str__(self):
-        return "<Services %s>" % ','.join(self.service_names())
+        params = ' '.join(["%s=%s" % (k,v) for k,v in self.parameters.items()])
+        return "<Service %s %s %s %s>" % (self.name, self.container, self.url, params)
 
-    def get_url(self, service_name):
-        """Return the URL for the service, keeping in mind that the URL is different
-        depending on whether you run from inside a container or from the host."""
-        if host_mode():
-            return self.service_urls[service_name][1]
-        else:
-            return self.service_urls[service_name][0]
-
-    def get_params(self, service_name):
-        return self.service_params[service_name]
-
-    def service_names(self):
-        """Returns service names sorted on port number."""
-        return [k for k,v in sorted(self.service_urls.items(), key=itemgetter(1))]
-
-    def metadata(self, service_name):
-        url = self.get_url(service_name)
+    def metadata(self):
         try:
-            response = requests.get(url)
+            response = requests.get(self.url)
             # TODO: using json() gives an error for reasons I do not yet understand
             return response.text
         except requests.exceptions.ConnectionError as e:
             print(">>> WARNING: error connecting to %s, returning empty metadata" % url)
             return {}
 
-    def run(self, service_name, input_string):
-        url = self.get_url(service_name)
-        params = self.get_params(service_name)
+    def run(self, input_string):
+        #url = self.get_url(service_name)
+        #params = self.get_params(service_name)
         try:
-            response = requests.put(url, data=input_string, params=params)
+            response = requests.put(self.url, data=input_string, params=self.parameters)
             return response.text
         except requests.exceptions.ConnectionError as e:
             print(">>> WARNING: error connecting to %s, returning input MMIF" % url)
@@ -135,13 +104,25 @@ class Services(object):
 
 class Pipeline(object):
 
-    """To create a pipeline you first collect all services from the docker compose
-    configuration file and then set the pipeline, generate the pipeline from the
-    configuration if the pipeline handed in is the empty list."""
+    """To create a pipeline you first collect all services from the two
+    configuration files and then set the pipeline, generate the pipeline from
+    the configuration if the pipeline handed in is the empty list."""
 
     def __init__(self, pipeline, parameters=None):
-        self.services = Services(parameters)
-        self.pipeline = pipeline if pipeline else self.services.service_names()
+        with open(COMPOSE_FILE, 'r') as fh1, open(CONFIG_FILE, 'r') as fh2:
+            compose_specs = yaml.safe_load(fh1)
+            config_specs = yaml.safe_load(fh2)
+        self.services = []
+        self.services_idx = {}
+        # Build a dictionary of service names and their URLs
+        for service in config_specs['services']:
+            name, service_specs = list(service.items())[0]
+            service_compose_specs = compose_specs['services'][name]
+            s = Service(name, service_specs, service_compose_specs, parameters)
+            self.services.append(s)
+            self.services_idx[name] = s
+        self.service_names = [s.name for s in self.services]
+        self.pipeline = pipeline if pipeline else self.service_names
 
     def __str__(self):
         return "<Pipeline %s>" % ('|'.join(self.pipeline))
@@ -149,6 +130,10 @@ class Pipeline(object):
     def run(self, in_path, out_path, verbose=False, intermediate=False):
         self.verbose = verbose
         self.intermediate = intermediate
+        if verbose:
+            print("Services in pipeline:")
+            for service_name in self.pipeline:
+                print('   ', self.services_idx[service_name])
         if not os.path.exists(in_path):
             exit("ERROR: input file or directory does not exist, exiting...")
         if os.path.exists(out_path):
@@ -171,19 +156,16 @@ class Pipeline(object):
             print('Processing %s' % infile)
         mmif_string = open(infile).read()
         result = None
-        step = 0
-        for service in self.pipeline:
+        for (step, service_name) in enumerate(self.pipeline):
             if self.verbose:
-                print("...running %s" % service)
-            step += 1
+                print("...running %s" % service_name)
             input_string = mmif_string if result is None else result
-            # not using the metadata for now
-            # metadata = self.services.metadata(service)
-            result = self.services.run(service, input_string)
+            service = self.services_idx[service_name]
+            result = service.run(input_string)
             result = input_string if result is None else result
             if self.intermediate:
                 out = outfile[:-5] if outfile.endswith('.json') else outfile
-                with open("%s-%d-%s.json" % (out, step, service), 'w') as fh:
+                with open("%s-%d-%s.json" % (out, step + 1, service_name), 'w') as fh:
                     fh.write(result)
         with open(outfile, 'w') as fh:
             fh.write(result)
@@ -194,9 +176,9 @@ def host_mode():
     is a simple heuristic to determine if we are running in a container or not,
     assuming that the 'docker' command WILL NOT be present when we are inside a
     container and WILL be present if we are on the host."""
-    # NOTE: others suggested to check for the presence of the /.dockerenv file
-    # TODO: maybe use a command line option to distinguish between the two cases
-    return shutil.which('docker') is None
+    # NOTE: some suggest to check for the presence of the /.dockerenv file
+    # NOTE: maybe use a command line option to distinguish between the two cases
+    return shutil.which('docker') is not None
 
 
 def parse_arguments():
@@ -209,7 +191,7 @@ def parse_arguments():
     parser.add_argument("-i", "--intermediate", action="store_true",
                         help="save intermediate files")
     parser.add_argument("--params", dest="parameters",
-                        help="parmaters for the pipeline components")
+                        help="parameters for the pipeline components")
     return parser.parse_args()
 
 

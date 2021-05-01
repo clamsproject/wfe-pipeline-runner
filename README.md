@@ -269,7 +269,7 @@ $ python run_pipeline.py out-tokenizer out-spacy
 
 And now we also have a directory `out-spacy` with results of spacy processing.
 
-#### 3.2.  Running from the docker host
+#### 3.2.  Running from the pipeline container
 
 This is very much the same as the above, except that we also need to log into the pipeline container. Let's assume we have already started the pipeline. We enter the pipeline container and then do exactly the same thing we did before when we did not run the pipeline from a container.
 

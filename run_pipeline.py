@@ -39,14 +39,13 @@ See README.md for more details, including on the --params option.
 
 """
 
-import os
-import sys
-import shutil
-import json
-import yaml
+import os, sys, shutil, time
+import json, yaml
 import requests
 import argparse
 from operator import itemgetter
+
+from mmif import Mmif
 
 
 # configuration files
@@ -63,6 +62,7 @@ class Service(object):
         self.container = specs['container']
         self.port = compose_specs['ports'][0].split(':')[0]
         self.url = self._get_url()
+        self._metadata = None
         self.parameters = specs['parameters']
         if parameters is not None:
             for parameter in parameters.split(','):
@@ -83,23 +83,22 @@ class Service(object):
         return "<Service %s %s %s %s>" % (self.name, self.container, self.url, params)
 
     def metadata(self):
-        try:
-            response = requests.get(self.url)
-            # TODO: using json() gives an error for reasons I do not yet understand
-            return response.text
-        except requests.exceptions.ConnectionError as e:
-            print(">>> WARNING: error connecting to %s, returning empty metadata" % url)
-            return {}
+        if self._metadata is None:
+            try:
+                response = requests.get(self.url)
+                self._metadata = json.loads(response.text)
+            except requests.exceptions.ConnectionError as e:
+                print(">>> WARNING: error connecting to %s, returning empty metadata" % url)
+                self._metadata = {}
+        return self._metadata
 
     def run(self, input_string):
-        #url = self.get_url(service_name)
-        #params = self.get_params(service_name)
         try:
             response = requests.put(self.url, data=input_string, params=self.parameters)
             return response.text
         except requests.exceptions.ConnectionError as e:
             print(">>> WARNING: error connecting to %s, returning input MMIF" % url)
-            return None
+            return input_string
 
 
 class Pipeline(object):
@@ -154,21 +153,78 @@ class Pipeline(object):
     def run_on_file(self, infile, outfile):
         if self.verbose:
             print('Processing %s' % infile)
-        mmif_string = open(infile).read()
-        result = None
+        self.time_elapsed = {}
+        mmif_in = open(infile).read()
         for (step, service_name) in enumerate(self.pipeline):
+            t0 = time.time()
             if self.verbose:
                 print("...running %s" % service_name)
-            input_string = mmif_string if result is None else result
             service = self.services_idx[service_name]
-            result = service.run(input_string)
-            result = input_string if result is None else result
-            if self.intermediate:
-                out = outfile[:-5] if outfile.endswith('.json') else outfile
-                with open("%s-%d-%s.json" % (out, step + 1, service_name), 'w') as fh:
-                    fh.write(result)
+            mmif_out = self.run_service_on_file(service, mmif_in)
+            self._save_intermediate_file(outfile, step, service_name, mmif_out)
+            self.time_elapsed[service.metadata()['app']] = time.time() - t0
+            mmif_in = mmif_out
         with open(outfile, 'w') as fh:
-            fh.write(result)
+            fh.write(mmif_out)
+        if self.verbose:
+            self.print_statistics(infile, mmif_out)
+
+    def run_service_on_file(self, service, mmif_in):
+        """Run the service on the mmif input and create mmif output. The output
+        has a new view with either an error in the metadata or a dictionary of
+        annotation types potentially added by the service."""
+        mmif_out = service.run(self._introduce_error(service, mmif_in))
+        try:
+            # NOTE: this makes sure the result is JSON
+            # TODO: should perhaps do this with Mmif(mmif_out)
+            json.loads(mmif_out)
+            return mmif_out
+        except ValueError:
+            # TODO. This assumes the error is in the string returned by the
+            # service, which will change soon.
+            error_message = mmif_out.split('\n')[-2]
+            error = { "message": error_message, "stackTrace": mmif_out }
+            mmif_out = Mmif(mmif_in)
+            error_view = mmif_out.new_view()
+            error_view.metadata.app = service.metadata()['app']
+            error_view.metadata.set_additional_property('error', error)
+            return mmif_out.serialize(pretty=True)
+
+    def _introduce_error(self, service, mmif_string):
+        """Debugging code used to introduce an error on purpose by making the MMIF
+        string invalid JSON."""
+        # edit the value to make a service fail
+        failing_service = None
+        #failing_service = 'spacy'
+        if service.name == failing_service:
+            mmif_string += "SCREWING_UP_THE_JSON_SYNTAX"
+        return mmif_string
+
+    def _dribble_mmif(self, prefix, mmif, nl=True):
+        print(prefix, type(mmif))
+        print(prefix, str(mmif)[:80], '...')
+        print(prefix, ' ...', str(mmif)[-80:])
+        if nl:
+            print()
+
+    def _save_intermediate_file(self, outfile, step, service_name, mmif_out):
+        if self.intermediate:
+            out = outfile[:-5] if outfile.endswith('.json') else outfile
+            with open("%s-%d-%s.json" % (out, step + 1, service_name), 'w') as fh:
+                fh.write(mmif_out)
+
+    def print_statistics(self, infile, result):
+        # TODO: update this for when we have errors
+        print
+        print('Statistics for each view in %s:' % infile)
+        for view in Mmif(result).views:
+            time_elapsed = self.time_elapsed.get(view.metadata.app, 0.0)
+            if 'error' in view.metadata:
+                status = 'status=ERROR - %s' % view.metadata['error']['message']
+            else:
+                status = 'status=OKAY - %d annotations' % len(view.annotations)
+            print('%s app=%s time=%.2fs %s'
+                  % (view.id, view.metadata.app, time_elapsed, status))
 
 
 def host_mode():

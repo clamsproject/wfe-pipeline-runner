@@ -1,0 +1,10 @@
+data: ${PWD}/examples/data
+
+pipeline:
+  image: clams-pipeline
+  container: pipeline
+
+services:
+  - tokenizer:
+      image: clams-nlp-example
+      container: pipeline_tokenizer

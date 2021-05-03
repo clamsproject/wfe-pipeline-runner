@@ -1,0 +1,10 @@
+data: ${PWD}/examples/data
+
+pipeline:
+  image: clams-pipeline
+  container: pipeline
+
+services:
+  - spacy:
+      image: clams-spacy-nlp
+      container: pipeline_spacy

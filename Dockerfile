@@ -1,12 +1,13 @@
-FROM python:3.6-buster
+FROM python:3.6-slim-buster
 
-# Only useful when you do some debugging
-# RUN apt-get -y update && apt-get -y install curl emacs24
+# Used for debugging, can be removed at some point to save space
+RUN apt-get -y update && apt-get -y install curl vim
 
 WORKDIR ./app
 
-COPY ./pipeline.py .
-COPY ./docker-compose.yml .
 COPY ./requirements.txt .
 
 RUN pip3 install -r requirements.txt
+
+COPY ./*.py ./
+COPY ./examples/mmif ./examples/mmif

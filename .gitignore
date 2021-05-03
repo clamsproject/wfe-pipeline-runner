@@ -2,5 +2,9 @@
 *~
 __pycache__
 
+# don't version the files that are changed for each pipeline
+/config.yml
+/docker-compose.yml
+
 # not interested in any compose configuration files for personal use
 /docker-compose*.yml

@@ -1,0 +1,17 @@
+data: ${PWD}/examples/data
+
+pipeline:
+  image: clams-pipeline
+  container: pipeline
+
+services:
+  - tokenizer:
+      image: clams-nlp-example
+      container: pipeline_tokenizer
+      parameters:
+        eol: False
+  - spacy:
+      image: clams-spacy-nlp
+      container: pipeline_spacy
+      parameters:
+        pretty: True

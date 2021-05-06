@@ -63,7 +63,8 @@ class Service(object):
         self.port = compose_specs['ports'][0].split(':')[0]
         self.url = self._get_url()
         self._metadata = None
-        self.parameters = specs['parameters']
+        self.parameters = {}
+        parameters = specs.get('parameters')
         if parameters is not None:
             for parameter in parameters.split(','):
                 name, value = parameter.split('=')
@@ -216,7 +217,7 @@ class Pipeline(object):
     def print_statistics(self, infile, result):
         # TODO: update this for when we have errors
         print
-        print('Statistics for each view in %s:' % infile)
+        print('Statistics for each view')
         for view in Mmif(result).views:
             time_elapsed = self.time_elapsed.get(view.metadata.app, 0.0)
             if 'error' in view.metadata:
@@ -246,7 +247,7 @@ def parse_arguments():
                         help="print progress to standard output")
     parser.add_argument("-i", "--intermediate", action="store_true",
                         help="save intermediate files")
-    parser.add_argument("--params", dest="parameters",
+    parser.add_argument("--params", dest="parameters", default='',
                         help="parameters for the pipeline components")
     return parser.parse_args()
 

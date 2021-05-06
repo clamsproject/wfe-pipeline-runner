@@ -63,13 +63,18 @@ class Service(object):
         self.port = compose_specs['ports'][0].split(':')[0]
         self.url = self._get_url()
         self._metadata = None
-        self.parameters = {}
+        # TODO: the following is likely more complicated than it need be
         parameters = specs.get('parameters')
-        if parameters is not None:
+        if parameters is None:
+            self.parameters = {}
+        elif isinstance(parameters, str):
+            self.parameters = {}
             for parameter in parameters.split(','):
                 name, value = parameter.split('=')
                 component, name = name.split('-', 1)
                 self.parameters[name] = value
+        elif isinstance(parameters, dict):
+            self.parameters = parameters
 
     def _get_url(self):
         # The URL depends on whether the pipeline service runs in a container,

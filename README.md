@@ -177,7 +177,7 @@ This creates the following file:
       "@type": "http://mmif.clams.ai/0.2.1/vocabulary/TextDocument",
       "properties": {
         "mime": "text",
-        "location": "/data/text/927364.mp4",
+        "location": "/data/text/927364.txt",
         "id": "d2"
       }
     }

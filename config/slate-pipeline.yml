@@ -1,0 +1,24 @@
+data: ${PWD}/examples/data
+
+pipeline:
+  image: clams-pipeline
+  container: pipeline
+
+services:
+  - slate:
+      image: clams-slate-detector
+      container: clams_slate
+      parameters:
+        stopAt: 1800
+
+  - slate-td:
+      image: clams-slatetext-detector
+      container: clams_slate_td
+      parameters:
+        frameType: slate
+
+  - tesseract:
+      image: clams-tesseract
+      container: clams_tesseract
+      parameters:
+        boxType: slate_text

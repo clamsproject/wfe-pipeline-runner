@@ -9,5 +9,5 @@ services:
       image: clams-nlp-example
       container: pipeline_tokenizer
   - spacy:
-      image: clams-spacy-nlp
+      image: clams-spacy-nlp:0.0.6
       container: pipeline_spacy

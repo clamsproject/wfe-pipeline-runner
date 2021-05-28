@@ -8,14 +8,14 @@ Requirements:
 - Python 3.6 or higher, with the `PyYAML`, `requests` and `clams-python` packages (see `requirements.txt`)
 - git (if you do not have the pipeline code yet)
 
-To install the packages and get the code: 
+To get the code and install the packages:
 
 ```
-$ pip3 install -r requirements.txt
 $ git clone https://github.com/clamsproject/pipeline-runner.git
+$ pip3 install -r requirements.txt
 ```
 
-In addition you will need access to the applications in the pipeline and the pipeline code itself by having the Docker images available locally or by a pull.
+In addition you will need access to the applications in the pipeline and the pipeline code itself by having the Docker images for all of them available locally or by a pull.
 
 This document spells out how to run the pipeline and explains what is going on. If you know what your are doing and you have created a configuration file all you need to do is run two commands from the top-level of the repository, with the second one resulting in a MMIF file with the results of all processing:
 
@@ -24,7 +24,7 @@ $ python start_pipeline.py
 $ python pipeline.py examples/mmif/east-tesseract.json out.json
 ```
 
-More verbosely, there are three parts to this: (1) starting the CLAMS applications, (2) preparing your data and (3) running the pipeline. The rest of this documents first focuses on these three steps, in the last section we look at how to hand in parameters to individual applications. 
+There are three parts to this: (1) starting the CLAMS applications, (2) preparing your data and (3) running the pipeline. The rest of this documents first focuses on these three steps, in the last section we look at how to hand in parameters to individual applications.
 
 
 
@@ -48,7 +48,7 @@ services:
       container: pipeline_spacy
 ```
 
-First we define a local directory that will be shared with the containers of all applications. In this case we take a directory inside this repository, but in real live it would be more likely something like `/var/archive/data` or something like that. Next we define the name of the pipeline container and the name of the image the container will be started from. This image can be created from the Dockerfile in this directory. Finally we list the applications  (`tokenizer` and `spacy`) and for each one we specify the Docker image and the name of the Docker container we create from the image. The container will contain the application. 
+First we define a local directory that will be shared with the containers of all applications. In this case we take a directory inside this repository, but in real live it would be more likely something like `/var/archive/data` or something like that. Note that the local directory has to be an absolute path. Next we define the name of the pipeline container and the name of the image the container will be started from (`clams-pipeline`). This image can be created from the Dockerfile in this directory. Finally we list the applications  (`tokenizer` and `spacy`) and for each one we specify the Docker image (`clams-nlp-example` and `clams-spacy-nlp`) and the name of the Docker container we create from the image. The container for a CLAMS app includes a Flask server with access to a CLAMS tool.
 
 We mentioned that `start_pipeline.py` assumes the availabilty of a set of Docker images. These image will be taken from the list of locally available images or pulled from Docker Hub ([https://hub.docker.com/](https://hub.docker.com/)). At the moment, there are no images for CLAMS applications available on DockerHub and it is therefore your responsibility to build images locally. In particular, you need an image for the pipeline repository and one for each CLAMS application. This readme file is in the pipeline repository so in order to build the pipeline image all you need to do is
 
@@ -61,7 +61,7 @@ The CLAMS repositories in this example are available at [https://github.com/clam
 - [https://github.com/clamsproject/app-nlp-example](https://github.com/clamsproject/app-nlp-example)
 - [https://github.com/clamsproject/app-spacy-nlp](https://github.com/clamsproject/app-spacy-nlp)
 
-With the images available and the above configuration filewe can start the pipeline as follows.
+See the instructions in those repositories on how to build the images. With the images available and the above configuration file we can start the pipeline as follows.
 
 ```
 $ python start_pipeline.py config/tokenizer-spacy.yml
@@ -69,9 +69,9 @@ $ python start_pipeline.py config/tokenizer-spacy.yml
 
 This does several things:
 
-1. It creates a file `docker-compose.yml` in the top-level directory. This file specifies the names of containers for all applications, sets up the container's access to the shared data directory, and defines a port mapping for the each Flask server that runs an application in a container. 
+1. It creates a file `docker-compose.yml` in the top-level directory. This file specifies the names of containers for all applications, sets up the container's access to the shared data directory, and defines a port mapping for the each Flask server that runs an application in a container.
 2. It copies `config/tokenizer-spacy.yml` to `config.yml` in the top-level directory.
-3. It runs the `docker-compose up -d` command to start up the containers. The `docker-compose` command uses the images and starts containers, one for the pipeline script and one for each CLAMS application (which is a Flask server with access to a CLAMS tool). In addition it mounts the data directory given in the configuration file to a directory `/data` on the container.
+3. It runs the `docker-compose up -d` command to start up the containers. The `docker-compose` command uses the images and starts containers, one for the pipeline script and one for each CLAMS application. In addition it mounts the data directory given in the configuration file to a directory `/data` on the container.
 4. It copies `docker-compose.yml` and `config.yml` to the pipeline runner container.
 
 At that point, all containers are up and all the configuration files needed for the pipeline script to run are available. You can list the containers.
@@ -83,11 +83,11 @@ $ docker ps --format " {{.ID}}  {{.Image}}  {{.Names}}  {{.Ports}} "
 c4b8c9f50899  clams-pipeline	   pipeline 	 
 ```
 
-Note how the image and container names for the CLAMS applications and the pipeline code are taken directly from the original configuration file. 
+Note how the image and container names for the CLAMS applications and the pipeline code are taken directly from the original configuration file.
 
 #### 1.1. The docker compose file
 
-It is safe to skip this section if you are not interested in a look behind the screen on the docker compose file. 
+It is safe to skip this section if you are not interested in a look behind the screen on the docker compose file.
 
 This is what the automatically generated `docker-compose.yml` looks like when we use the example configuration file above.
 
@@ -131,7 +131,7 @@ A few remarks:
   - The subdirectories themselves have no substructure and just contain documents of the particular type that the sub directory is for. At some point this restriction may be relaxed.
 - We use *ports* to define the port that will be exposed to the outside world. In the containers, Flask will run on port 5000, but we expose these ports as 5001 and 5002 to the terminal that the pipeline script runs from.
 
-Port numbers are generated automatically and will be used if we run the pipeline script from a host, the container names are used if we run the piplein script from within the network, that is, from within the `pipeline` container.
+Port numbers are generated automatically and will be used if we run the pipeline script from a host, the container names are used if we run the pipline script from within the network, that is, from within the `pipeline` container.
 
 To take down the application and its containers use `docker-compose down`.
 
@@ -139,9 +139,9 @@ To take down the application and its containers use `docker-compose down`.
 
 ### 2.  Preparing your data
 
-It is important to realize that the input to a pipeline is a MMIF file and not a video, audio, image or text document. The MMIF file refers to those documents but does not include them (even though optionally that might be the case for text documents). This gets a bit tricky when you realize that the MMIF file could sent from the local machine where the pipeline script resides to a server on a container and therefore the documents referred to from the MMIF file must be accessible from the container.
+It is important to realize that the input to a pipeline is a MMIF file and not a video, audio, image or text document. The MMIF file refers to those documents but does not include them (even though optionally that might be the case for text documents). This gets a bit tricky when you realize that the MMIF file could be sent from the local machine where the pipeline script resides to a server on a container and therefore the documents referred to from the MMIF file must be accessible from the container.
 
-In the above example we mounted a local directory to the `/data` directory on the container. For the explanation below we are assuming that we did not use `examples/data` but `/data/clams/archive`. With that in mind you can depict the flow when you run the pipeline script from your local machine as follows:
+In the running example we mounted a local directory to the `/data` directory on the container. For the explanation below we are assuming that we did not use `examples/data` but `/data/clams/archive`. With that in mind you can depict the flow when you run the pipeline script from your local machine as follows:
 
 <img src="images/pipeline.jpg"/>
 
@@ -191,14 +191,14 @@ And this file, or any other file created as above, can be used as input to the p
 
 ### 3.  Running the pipeline script
 
-We can now run the `pipeline.py` script and we can run it in two ways:
+We can now run the `run_pipeline.py` script and we can run it in two ways:
 
-1. From the Docker host, where the CLAMS services are all running in there own containers and we access them from the host.
+1. From the Docker host, where the CLAMS services are all running in their own containers and we access them from the host.
 2. From a container, where the pipeline code is running in its own container and we first connect to that container.
 
 #### 3.1.  Running from the docker host
 
-The pipeline script uses the automatically generated configuration files `config.yml` and `docker-compose.yml` to figure out what services are available. You give it a MMIF file as a parameter and optionally a list of services, if no services are given then a default pipeline of services will be created from all available services, ordered on port number (which reflects the order in the original configuration script.
+The pipeline script uses the automatically generated configuration files `config.yml` and `docker-compose.yml` to figure out what services are available. You give it a MMIF file as a parameter and optionally a list of services, if no services are given then a default pipeline of services will be created from all available services, ordered exactly as in the original configuration script.
 
 Use -h to see the available options and arguments:
 
@@ -250,7 +250,7 @@ Note the differences in file names and the different file sizes of the intermedi
 
 We could also have given just a single step pipeline, in which case there would be only one intermediate output file.
 
-The approach painted here requires that all applications can be loaded at the same time, which in some cases may not be feasible. If running a complete pipeline runs into memory issues then you can use the pipeline script to successively run one step pipelines over a directory. Assume we have two configuration scripts, one for just the tokenizer and one for Spacy. We can then run just the first step over all documents:
+The approach painted here requires that all applications can be loaded at the same time, which in some cases may not be feasible. If running a complete pipeline runs into memory issues then you can use the pipeline script to successively run one-step pipelines over a directory. Assume we have two configuration scripts, one for just the tokenizer and one for Spacy. We can then run just the first step over all documents:
 
 ```
 $ python start_pipeline.py config/tokenizer.yml
@@ -294,9 +294,15 @@ drwxr-xr-x 3 root root    4096 Apr 29 15:44 examples
 
 
 
-### 4.  Handing parameters to applications
+### 4.  Errors
 
-Application can take parameters and of course differ as to what parameters they take. We allow the initial configuration file to include parameters. For example, instead of `config/tokenizer-spacy.yml` we can use `config/tokenizer-spacy-params.yml` which looks as follows.
+To be written.
+
+
+
+### 5.  Handing parameters to applications
+
+Application can take parameters and ee allow the initial configuration file to include parameters. For example, instead of `config/tokenizer-spacy.yml` we can use `config/tokenizer-spacy-params.yml` which looks as follows.
 
 ```yaml
 data: ${PWD}/examples/data
@@ -320,7 +326,7 @@ services:
 
 Added here are two parameters, one for the tokenizer and one for spaCy. With this you would still use `start_pipeline.py` and `run_pipeline.py` as before, and with the latter all the parameters in the configuration file will be handed in to the application. You can also edit the `config.yml` before you run `run_pipeline.py` and the updated parameters will be handed in.
 
-You can also overrule parameters in `config.py` by using command line arguments. 
+You can also overrule parameters in `config.py` by using command line arguments.
 
 ```
 $ python run_pipeline.py -iv --params tokenizer-eol=True examples/mmif/tokenizer-spacy-1.json out.json

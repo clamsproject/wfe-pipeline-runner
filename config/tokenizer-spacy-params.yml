@@ -11,7 +11,7 @@ services:
       parameters:
         eol: False
   - spacy:
-      image: clams-spacy-nlp
+      image: clams-spacy-nlp:0.0.6
       container: pipeline_spacy
       parameters:
         pretty: True

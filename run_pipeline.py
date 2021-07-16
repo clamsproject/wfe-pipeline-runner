@@ -210,7 +210,7 @@ class Pipeline(object):
                 mmif = mmif_with_error_view(mmif_in, service, error_message)
                 mmif_out = str(mmif_out)
             self._save_intermediate_file(outfile, step, service_name, mmif_out)
-            self.time_elapsed[service.metadata()['iri']] = time.time() - t0
+            self.time_elapsed[service.metadata()['identifier']] = time.time() - t0
             if error and self.abort:
                 if self.verbose:
                     print("    ...aborting with error")

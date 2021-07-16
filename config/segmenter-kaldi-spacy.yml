@@ -1,0 +1,16 @@
+data: ${PWD}/examples/data
+
+pipeline:
+  image: clams-pipeline
+  container: pipeline
+
+services:
+  - ina:
+      image: clams-ina-segmenter
+      container: pipeline_ina
+  - kaldi:
+      image: clams-kaldi
+      container: pipeline_kaldi
+  - spacy:
+      image: clams-spacy
+      container: pipeline_spacy

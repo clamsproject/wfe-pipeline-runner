@@ -20,7 +20,7 @@ You need the following repositories:
 - [https://github.com/clamsproject/pipeline-runner](https://github.com/clamsproject/pipeline-runner)
 - [https://github.com/clamsproject/app-nlp-example](https://github.com/clamsproject/app-nlp-example)
 
-The first is an absolute necessity and we are using version 0.0.6 here, the second you need to run the pipeline script, but if you want to use your own scripts that would work, the third is optional and is here just to show how you run NER as the second step in a pipeline.
+The first is an absolute necessity, the second you need to run the pipeline script, but if you want to use your own scripts that would work, the third is optional and is here just to show how you run NER as the second step in a pipeline.
 
 Clone these repositories to your machine and create an image for each one:
 
@@ -30,7 +30,7 @@ $ docker build -t clams-spacy-nlp .
 $ cd <PIPELINE_REPO_DIR>
 $ docker build -t clams-pipeline .
 $ cd <EXAMPLE_REPO_DIR>
-$ docker build -t clams-nlp-example:0.0.6 .
+$ docker build -t clams-nlp-example .
 ```
 
 None of those images make any assumptions on what volumes to share or what URLs to expose, that is done later.
@@ -40,11 +40,11 @@ Your MMIF files probably look like this.
 ```json
 {
   "metadata": {
-    "mmif": "http://mmif.clams.ai/0.3.1"
+    "mmif": "http://mmif.clams.ai/0.4.0"
   },
   "documents": [
     {
-      "@type": "http://mmif.clams.ai/0.3.1/vocabulary/VideoDocument",
+      "@type": "http://mmif.clams.ai/0.4.0/vocabulary/VideoDocument",
       "properties": {
         "mime": "video",
         "location": "/data/video/927364.mp4",
@@ -52,7 +52,7 @@ Your MMIF files probably look like this.
       }
     },
     {
-      "@type": "http://mmif.clams.ai/0.3.1/vocabulary/TextDocument",
+      "@type": "http://mmif.clams.ai/0.4.0/vocabulary/TextDocument",
       "properties": {
         "mime": "text",
         "location": "/data/text/927364.txt",
@@ -80,7 +80,7 @@ services:
       image: clams-nlp-example
       container: pipeline_tokenizer
   - spacy:
-      image: clams-spacy-nlp:0.0.6
+      image: clams-spacy-nlp
       container: pipeline_spacy
 ```
 

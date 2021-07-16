@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "mmif": "http://mmif.clams.ai/0.2.1"
+    "mmif": "http://mmif.clams.ai/0.3.1"
   },
   "documents": [
     {
-      "@type": "http://mmif.clams.ai/0.2.1/vocabulary/VideoDocument",
+      "@type": "http://mmif.clams.ai/0.3.1/vocabulary/VideoDocument",
       "properties": {
         "id": "m1",
         "mime": "video/mpeg",
@@ -12,7 +12,7 @@
       }
     },
     {
-      "@type": "http://mmif.clams.ai/0.2.1/vocabulary/TextDocument",
+      "@type": "http://mmif.clams.ai/0.3.1/vocabulary/TextDocument",
       "properties": {
         "id": "m2",
         "mime": "text/plain",
@@ -24,9 +24,9 @@
     {
       "id": "v_1",
       "metadata": {
-        "app": "http://mmif.clams.ai/apps/east/0.2.1",
+        "app": "http://mmif.clams.ai/apps/east/0.3.1",
         "contains": {
-          "http://mmif.clams.ai/0.2.1/vocabulary/BoundingBox": {
+          "http://mmif.clams.ai/0.3.1/vocabulary/BoundingBox": {
             "unit": "pixels",
             "document": "m1"
           }
@@ -34,7 +34,7 @@
       },
       "annotations": [
         {
-          "@type": "http://mmif.clams.ai/0.2.1/vocabulary/BoundingBox",
+          "@type": "http://mmif.clams.ai/0.3.1/vocabulary/BoundingBox",
           "properties": {
             "id": "bb1",
             "coordinates": [ [10, 20], [40, 20], [10, 30], [40, 30] ],
@@ -43,7 +43,7 @@
           }
         },
         {
-          "@type": "http://mmif.clams.ai/0.2.1/vocabulary/BoundingBox",
+          "@type": "http://mmif.clams.ai/0.3.1/vocabulary/BoundingBox",
           "properties": {
             "id": "bb2",
             "coordinates": [ [210, 220], [240, 220], [210, 230], [240, 230] ],
@@ -56,7 +56,7 @@
     {
       "id": "v_2",
       "metadata": {
-        "app": "http://mmif.clams.ai/apps/tesseract/0.2.1",
+        "app": "http://mmif.clams.ai/apps/tesseract/0.3.1",
         "contains": {
           "http://mmif.clams.ai/0.1.0/TextDocument": {},
           "http://mmif.clams.ai/0.1.0/Alignment": {}
@@ -64,7 +64,7 @@
       },
       "annotations": [
         {
-          "@type": "http://mmif.clams.ai/0.2.1/vocabulary/TextDocument",
+          "@type": "http://mmif.clams.ai/0.3.1/vocabulary/TextDocument",
           "properties": {
             "id": "td1",
             "text": {
@@ -73,7 +73,7 @@
           }
         },
         {
-          "@type": "http://mmif.clams.ai/0.2.1/vocabulary/Alignment",
+          "@type": "http://mmif.clams.ai/0.3.1/vocabulary/Alignment",
           "properties": {
             "id": "a1",
             "source": "v1:bb1",
@@ -81,7 +81,7 @@
           }
         },
         {
-          "@type": "http://mmif.clams.ai/0.2.1/vocabulary/TextDocument",
+          "@type": "http://mmif.clams.ai/0.3.1/vocabulary/TextDocument",
           "properties": {
             "id": "td2",
             "text": {
@@ -90,7 +90,7 @@
           }
         },
         {
-          "@type": "http://mmif.clams.ai/0.2.1/vocabulary/Alignment",
+          "@type": "http://mmif.clams.ai/0.3.1/vocabulary/Alignment",
           "properties": {
             "id": "a2",
             "source": "v1:bb2",

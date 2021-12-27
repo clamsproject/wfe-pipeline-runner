@@ -1,6 +1,6 @@
 FROM python:3.6-slim-buster
 
-# Used for debugging, can be removed at some point to save space
+# Used for debugging, can be removed to save space
 RUN apt-get -y update && apt-get -y install curl vim
 
 WORKDIR ./app

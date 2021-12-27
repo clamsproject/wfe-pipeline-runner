@@ -6,5 +6,7 @@ pipeline:
 
 services:
   - spacy:
-      image: clams-spacy-nlp
+      image: clams-spacy-nlp:0.0.7
       container: pipeline_spacy
+      parameters:
+        pretty: True

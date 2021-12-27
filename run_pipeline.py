@@ -194,6 +194,7 @@ class Pipeline(object):
             if self.verbose:
                 print("...running %s" % service_name)
             service = self.services_idx[service_name]
+            #mmif_in = self._introduce_error(service, 'tokenizer', mmif_in)
             status_code, mmif_out = service.run(mmif_in)
             mmif = get_mmif_object(mmif_out)
             error, error_message = self._check_status(status_code, mmif)
@@ -254,12 +255,12 @@ class Pipeline(object):
                 # otherwise just write the mmif string as given
                 fh.write(mmif_out)
 
-    def _introduce_error(self, service, mmif_string):
+    def _introduce_error(self, service, failing_service, mmif_string):
         """Debugging code used to introduce an error on purpose by making the MMIF
         string invalid JSON."""
         # edit the value to make a service fail
         failing_service = None
-        #failing_service = 'tokenizer'
+        failing_service = 'tokenizer'
         if service.name == failing_service:
             mmif_string += "SCREWING_UP_THE_JSON_SYNTAX"
         return mmif_string
@@ -284,7 +285,11 @@ class Pipeline(object):
             # TODO: now view.metadata['error'] always evaluates to True, even if
             # there was no error, so we check for the message; update this when
             # behavior of view.metadata changes
-            if 'message' in view.metadata['error']:
+            #print('1>>>', type(view.metadata))
+            #print('2>>>', view.metadata)
+            #if view.metadata.error:
+            #    print('3>>>', view.metadata.error)
+            if 'message' in view.metadata.error:
                 status = 'status=ERROR - %s' % view.metadata['error']['message']
             else:
                 status = 'status=OKAY - %d annotations' % len(view.annotations)

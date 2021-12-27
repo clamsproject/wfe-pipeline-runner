@@ -1,16 +1,16 @@
 {
     "metadata": {
-	"mmif": "http://mmif.clams.ai/0.3.1"
+	"mmif": "http://mmif.clams.ai/0.4.0"
     },
     "documents": [
 	{
-	    "@type": "http://mmif.clams.ai/0.3.1/vocabulary/TextDocument",
+	    "@type": "http://mmif.clams.ai/0.4.0/vocabulary/TextDocument",
 	    "properties": {
 		"mime": "text",
 		"text": {
-		    "@value": "Hello, this is Jim Lehrer with the NewsHour on PBS. In the nineteen eighties, barking dogs have increasingly become a problem in urban areas."
+		    "@value": "Hello, this is Jim Lehrer with the NewsHour on PBS. In the nineteen eighties, barking dogs have increasingly become a problem in urban areas.\n"
 		},
-		"id": "d2"
+		"id": "d1"
 	    }
 	}
     ],

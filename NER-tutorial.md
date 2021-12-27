@@ -4,7 +4,7 @@ How to run spaCY NER on MMIF files. This document is specific to running an NER 
 
 You need Python 3.6 or higher, with the `PyYAML`, `requests` and `clams-python` packages.
 
-```
+```bash
 $ pip3 install -r requirements.txt
 ```
 
@@ -24,7 +24,7 @@ The first is an absolute necessity, the second you need to run the pipeline scri
 
 Clone these repositories to your machine and create an image for each one:
 
-```
+```bash
 $ cd <SPACY_REPO_DIR>
 $ docker build -t clams-spacy-nlp .
 $ cd <PIPELINE_REPO_DIR>
@@ -64,7 +64,7 @@ Your MMIF files probably look like this.
 }
 ```
 
-You have a video and an associtated transcript. The location of the source documents embodies one assumption which has been our convention all along: the application has access to a directory `/data` which has subdirectories for each document type.
+You have a video and an associated transcript. The location of the source documents embodies one assumption which has been our convention all along: the application has access to a directory `/data` which has subdirectories for each document type.
 
 Finally, if you use the pipeline script, you will need a configuration file.
 
@@ -84,7 +84,7 @@ services:
       container: pipeline_spacy
 ```
 
-This script is included in the pipeline repository at `config/tokenizer-spacy.yml`. The first line indicates what local directory is to be connected to the `/data` directory for all applications. This has to be an absolute path. The second block tells you what image to use for the pipeline script and what to name the container. Finally the services are enumerated, again using names of existing images. Use whatever container names you deem appropriate.
+This script is very much like the one included in the pipeline repository at `config/tokenizer-spacy.yml`. The main difference is that we do not use any version numbers and just go for the latest image. The first line indicates what local directory is to be connected to the `/data` directory for all applications. This has to be an absolute path. The second block tells you what image to use for the pipeline script and what to name the container. Finally the services are enumerated, again using names of existing images. Use whatever container names you deem appropriate.
 
 
 
@@ -96,7 +96,7 @@ You can do this by using the pipeline code or by doing it all manually. The firs
 
 Just run this command.
 
-```
+```bash
 $ python start_pipeline.py config/tokenizer-spacy.yml
 ```
 
@@ -122,7 +122,7 @@ NETWORK ID     NAME                      DRIVER    SCOPE
 
 You can do this manually by starting all applications by hand and then writing a script that uses curl or some other tool to access the services. For the latter part you are on your own, but this is how you would start the containers (this assumes there are no containers running with the names specified below).
 
-```
+```bash
 $ docker run --rm -d -p 5001:5000 -v ${PWD}/examples/data:/data --name pipeline_tokenizer clams-nlp-example
 $ docker run --rm -d -p 5002:5000 -v ${PWD}/examples/data:/data --name pipeline_spacy clams-spacy-nlp
 ```

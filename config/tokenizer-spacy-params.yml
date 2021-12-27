@@ -6,7 +6,7 @@ pipeline:
 
 services:
   - tokenizer:
-      image: clams-nlp-example
+      image: clams-nlp-example:0.0.5
       container: pipeline_tokenizer
       parameters:
         eol: False

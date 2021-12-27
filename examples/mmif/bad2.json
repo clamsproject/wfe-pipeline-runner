@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "mmif": "http://mmif.clams.ai/0.3.1"
+    "mmif": "http://mmif.clams.ai/0.4.0"
   },
   "documents": [
     {
-      "@type": "http://mmif.clams.ai/0.3.1/vocabulary/TextDocument",
+      "@type": "http://mmif.clams.ai/0.4.0/vocabulary/TextDocument",
       "properties": {
         "mime": "text",
         "location": "/data/text/east-tesseract.txt",

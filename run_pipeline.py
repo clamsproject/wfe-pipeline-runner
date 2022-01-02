@@ -163,7 +163,7 @@ class Pipeline(object):
         self.intermediate = intermediate
         self.abort = abort
         if verbose:
-            print("Services in pipeline:")
+            print("\nServices in pipeline:")
             for service_name in self.pipeline:
                 print('   ', self.services_idx[service_name])
         if not os.path.exists(in_path):
@@ -192,12 +192,13 @@ class Pipeline(object):
         for (step, service_name) in enumerate(self.pipeline):
             t0 = time.time()
             if self.verbose:
-                print("...running %s" % service_name)
+                print("\n... Running %s" % service_name)
             service = self.services_idx[service_name]
             #mmif_in = self._introduce_error(service, 'tokenizer', mmif_in)
             status_code, mmif_out = service.run(mmif_in)
             mmif = get_mmif_object(mmif_out)
             error, error_message = self._check_status(status_code, mmif)
+            #print_input_and_output(service, error, error_message, mmif_in, mmif_out)
             # case 1: no error
             if not error:
                 pass
@@ -208,13 +209,24 @@ class Pipeline(object):
                 pass
             # case 3: request error or other error, create mmif with new error view
             else:
-                mmif = mmif_with_error_view(mmif_in, service, error_message)
-                mmif_out = str(mmif_out)
+                # TODO: maybe some of this should be done in _check_status()
+                if mmif_out.startswith('<'):
+                    # the output from the application is an XML error string
+                    error_message = get_error_message_from_xml(mmif_out, error_message)
+                    mmif = mmif_with_error_view(mmif_in, service, error_message)
+                    mmif_out = str(mmif)
+                else:
+                    # the output from the application is MMIF
+                    mmif = mmif_with_error_view(mmif_in, service, error_message)
+                    mmif_out = str(mmif_out)
             self._save_intermediate_file(outfile, step, service_name, mmif_out)
             self.time_elapsed[service.metadata()['identifier']] = time.time() - t0
+            if error and error_message is not None and self.verbose:
+                print("    ... Warning, error while running application")
+                print("    ...", error_message)
             if error and self.abort:
                 if self.verbose:
-                    print("    ...aborting with error")
+                    print("    ... Aborting with error")
                 break
             mmif_in = mmif_out
         self._write_output(outfile, mmif, mmif_out, error)
@@ -279,7 +291,7 @@ class Pipeline(object):
                 fh.write(mmif_out)
 
     def print_statistics(self, outfile, result):
-        print('Statistics for each view in "%s"' % outfile)
+        print('\nStatistics for each view in "%s"' % outfile)
         for view in Mmif(result).views:
             time_elapsed = self.time_elapsed.get(view.metadata.app, 0.0)
             # TODO: now view.metadata['error'] always evaluates to True, even if
@@ -290,11 +302,13 @@ class Pipeline(object):
             #if view.metadata.error:
             #    print('3>>>', view.metadata.error)
             if 'message' in view.metadata.error:
-                status = 'status=ERROR - %s' % view.metadata['error']['message']
+                #status = 'status=ERROR - %s' % view.metadata['error']['message']
+                status = 'status=ERROR'
             else:
                 status = 'status=OKAY - %d annotations' % len(view.annotations)
             print('    %s app=%s time=%.2fs %s'
                   % (view.id, view.metadata.app, time_elapsed, status))
+        print()
 
 
 def input_is_valid(mmif_string):
@@ -310,8 +324,7 @@ def get_mmif_object(mmif_string):
     """Return the Mmif object for the string, return None if creating the Mmif
     object fails."""
     try:
-        mmif = Mmif(mmif_string)
-        return mmif
+        return Mmif(mmif_string)
     except:
         return None
                 
@@ -322,6 +335,26 @@ def mmif_with_error_view(base_mmif, service, error_message):
     error_view.metadata.app = service.identifier()
     error_view.metadata.set_additional_property('error', {'message': error_message})
     return mmif_out
+
+
+def get_error_message_from_xml(xml, error_message):
+    """Pull the error message from the XML. This is only geared towards finding
+    the error thrown by the server when there is an illegal parameter."""
+    message = error_message
+    for line in xml[:400].split("\n"):
+        if 'Error' in line:
+            fields = line.split('&#x27;')
+            if len(fields) > 1:
+                message = fields[1]
+    return message
+
+
+def print_input_and_output(service, error, error_message, mmif_in, mmif_out):
+    print('-' * 90)
+    print('>>>', service); print('>>>', (error, error_message))
+    print('-' * 40 , 'mmif_in', '-' * 40); print(mmif_in[:400])
+    print('-' * 40 , 'mmif_out', '-' * 40); print(str(mmif_out)[:400]); print('-' * 90)
+
 
 
 def error(http_code, service, message, stacktrace):

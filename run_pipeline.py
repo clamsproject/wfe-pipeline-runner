@@ -209,6 +209,7 @@ class Pipeline(object):
                 pass
             # case 3: request error or other error, create mmif with new error view
             else:
+                # TODO: maybe some of this should be done in _check_status()
                 if mmif_out.startswith('<'):
                     # the output from the application is an XML error string
                     error_message = get_error_message_from_xml(mmif_out, error_message)

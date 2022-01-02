@@ -12,5 +12,5 @@ services:
       image: clams-kaldi
       container: pipeline_kaldi
   - spacy:
-      image: clams-spacy
+      image: clams-spacy-nlp:0.0.7
       container: pipeline_spacy

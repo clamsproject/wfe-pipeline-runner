@@ -43,7 +43,7 @@ The CLAMS repositories in this example are available at:
 
 See the instructions in those repositories on how to build the images. With the images available and the above configuration file we can start the pipeline as follows.
 
-To start the containers needed for the pipeline we create a configuration files, here is an example configuration file for a pipeline with just a tokenizer and spaCy, this example is in this repository at `config/tokenizer-spacy.yml`.
+To start the containers needed for the pipeline we create a configuration file, here is an example configuration file for a pipeline with just a tokenizer and spaCy, this example is in this repository at `config/tokenizer-spacy.yml`.
 
 ```yaml
 data: ${PWD}/examples/data
@@ -238,7 +238,7 @@ $ ls -al out*
 -rw-r--r--   1 marc  staff   9845 Dec 27 16:11 out.json
 ```
 
-As input, we can also use `examples/mmif/tokenizer-spacy-2.json`, which instead of the `location` property uses the `text` property to store the text, the result will be the same except for some of the bookkeeping in the output.
+As input, we can also use `examples/mmif/tokenizer-spacy-2.json`, which uses the `text` property instead of the `location` property to store the text, the output will be the same except for some bookkeeping.
 
 Here we define the pipeline explicitly, switching the order relative to the default (and turning off verbose printing):
 

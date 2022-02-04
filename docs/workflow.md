@@ -15,7 +15,7 @@ Taking it step by step now.
 
 In the first step we create a MMIF file from the video and run a Kaldi pipeline on it that also includes the post-Kaldi component that restores punctuation and capitalization.
 
-<img src="images/workflow-1.png" width="700" align="left">
+<img src="images/workflow-1.png" width="700">
 
 The export component creates the more user-friendly format that allows you to easily extract needed information. It has no name yet but for now I will call it the People's MMIF.
 
@@ -112,7 +112,7 @@ Then we can create the MMIF file using just the video and text file:
 
 And now we can run another pipeline, the diagram for this entire step looks as follows.
 
-<img src="images/workflow-2.png" width="800" align="left">
+<img src="images/workflow-2.png" width="750">
 
 
 Note that the result of step 3 did not have any alignments on the token level and that we ran the aligner to reintroduce those. An alternative would be to not require alignment on the token level and be happy with the phrase alignment. In that case we would complicate the creation of the MMIF file a bit because we would want to add a view with text spans and alignments:
@@ -150,6 +150,5 @@ Note that the result of step 3 did not have any alignments on the token level an
 
 And now the pipeline can be shortened:
 
-<img src="images/workflow-3.png" width="700" align="left">
-
+<img src="images/workflow-3.png" width="700">
 

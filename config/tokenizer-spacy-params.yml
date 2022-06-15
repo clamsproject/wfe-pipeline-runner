@@ -1,12 +1,12 @@
 data: ${PWD}/examples/data
 
 pipeline:
-  image: clams-pipeline
+  image: clams-pipeline:0.2.1
   container: pipeline
 
 services:
   - tokenizer:
-      image: clams-nlp-example:0.0.6
+      image: clams-nlp-example:0.0.7
       container: pipeline_tokenizer
       parameters:
         eol: False

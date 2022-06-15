@@ -1,4 +1,4 @@
-# pipeline-runner
+# Pipeline Runner
 
 Code to run a CLAMS pipeline from the command line.
 
@@ -21,7 +21,7 @@ This document spells out how to run the pipeline and explains what is going on. 
 
 ```bash
 $ python start_pipeline.py <configuration_file>
-$ python run_pipeline.py examples/mmif/tokenizer-spacy-1.json out.json
+$ python run_pipeline.py <mmif_input> <mmif_output>
 ```
 
 There are three parts to this: (1) starting the CLAMS applications, (2) preparing your data and (3) running the pipeline. The rest of this documents first focuses on these three steps, in the last section we look at how to hand in parameters to individual applications.
@@ -30,10 +30,10 @@ There are three parts to this: (1) starting the CLAMS applications, (2) preparin
 
 ### 1.  Starting the applications
 
-The pipeline runner script in `run_pipeline.py` assumes there are Docker containers up and running for the pipeline code and each application that is used by the pipeline, it also assumes that those containers all have access to the same mounted directory. The `start_pipeline.py` script does that work for you given a fairly simple configuration file and a set of Docker images. These image will be taken from the list of locally available images or pulled from Docker Hub ([https://hub.docker.com/](https://hub.docker.com/)). At the moment, there are no images for CLAMS applications available on DockerHub and it is therefore your responsibility to build images locally. In particular, you need an image for the pipeline repository and one for each CLAMS application. This readme file is in the pipeline repository so in order to build the pipeline image using the Dockerfile all you need to do is
+The pipeline runner script in `run_pipeline.py` assumes there are Docker containers up and running for the pipeline code and each application that is used by the pipeline, it also assumes that those containers all have access to the same mounted directory. The `start_pipeline.py` script does that work for you given a fairly simple configuration file and a set of Docker images. These image will be taken from the list of locally available images or pulled from Docker Hub ([https://hub.docker.com/](https://hub.docker.com/)). At the moment, there are few images for CLAMS applications available on DockerHub and it is therefore your responsibility to build images locally. In particular, you need an image for the pipeline repository and one for each CLAMS application. To build the pipeline image using the Dockerfile in this repository all you need to do is
 
 ```bash
-$ docker build -t clams-pipeline .
+$ docker build -t clams-pipeline:0.2.1 .
 ```
 
 The CLAMS repositories in this example are available at:
@@ -49,12 +49,12 @@ To start the containers needed for the pipeline we create a configuration file, 
 data: ${PWD}/examples/data
 
 pipeline:
-  image: clams-pipeline
+  image: clams-pipeline:0.2.1
   container: pipeline
 
 services:
   - tokenizer:
-      image: clams-nlp-example:0.0.6
+      image: clams-nlp-example:0.0.7
       container: pipeline_tokenizer
   - spacy:
       image: clams-spacy-nlp:0.0.7
@@ -73,19 +73,19 @@ This does several things:
 
 1. It creates a file `docker-compose.yml` in the top-level directory. This file specifies the names of containers for all applications, sets up the container's access to the shared data directory, and defines a port mapping for the each Flask server that runs an application in a container.
 2. It copies `config/tokenizer-spacy.yml` to `config.yml` in the top-level directory.
-3. It runs the `docker-compose up -d` command to start up the containers. The `docker-compose` command uses the images and starts containers, one for the pipeline script and one for each CLAMS application. In addition it mounts the data directory given in the configuration file to a directory `/data` on the container.
+3. It runs the `docker-compose up -d` command to start up the containers. The `docker-compose` command uses the images and starts containers, one for the pipeline script and one for each CLAMS application. It mounts the data directory given in the configuration file to a directory `/data` on the container. Each container runs an HTTP server that will be listening on ports starting at 5001, and those ports need to be available when you start the pipeline.
 4. It copies `docker-compose.yml` and `config.yml` to the pipeline runner container.
 
 At that point, all containers are up and all the configuration files needed for the pipeline script to run are available. You can list the containers.
 
 ```
 $ docker ps --format " {{.ID}}  {{.Image}}  {{.Names}}  {{.Ports}} "
-97d275be6492  clams-nlp-example:0.0.6	 pipeline_tokenizer  0.0.0.0:5001->5000/tcp
-650e8a414e29  clams-spacy-nlp:0.0.7	   pipeline_spacy      0.0.0.0:5002->5000/tcp
-c4b8c9f50899  clams-pipeline	         pipeline 	 
+97d275be6492  clams-nlp-example:0.0.7	 pipeline_tokenizer  0.0.0.0:5001->5000/tcp
+650e8a414e29  clams-spacy-nlp:0.0.7    pipeline_spacy      0.0.0.0:5002->5000/tcp
+c4b8c9f50899  clams-pipeline:0.2.1     pipeline
 ```
 
-Note how the image and container names for the CLAMS applications and the pipeline code are taken directly from the original configuration file.
+Note how the image names and container names for the CLAMS applications and the pipeline code are taken directly from the original configuration file.
 
 #### 1.1. The docker compose file
 
@@ -100,7 +100,7 @@ services:
 
   pipeline:
     container_name: pipeline
-    image: clams-pipeline
+    image: clams-pipeline:0.2.1
     stdin_open: true
     tty: true
     volumes:
@@ -108,7 +108,7 @@ services:
 
   tokenizer:
     container_name: pipeline_tokenizer
-    image: clams-nlp-example:0.0.6
+    image: clams-nlp-example:0.0.7
     volumes:
       - "${PWD}/examples/data:/data"
     ports:
@@ -147,7 +147,7 @@ In the running example we mounted a local directory to the `/data` directory on 
 
 <img src="images/pipeline.jpg"/>
 
-The pipeline runs on a MMIF file that points to a video document at`/data/video/927364.mp4 ` and a text document at `/data/text/927364.txt `. Those paths do not exist on the local machine from which you run the pipeline script, but they do exist on the server that the MMIF file is sent to as part of an HTTP request. The files `927364.mp4 ` and `927364.txt` do exist on the local machine, but in a different directory. And that directory is mounted to the `/data` directory on the container when we run `docker-compose up -d` which uses the *volumes* specification. Because of that specification, `/data/video/927364.mp4` on the container is the same as `/data/clams/archive/video/927364.mp4` on the local machine. The HHTP request is received by the server, the application code finds the documents on the server, does its thing and then returns a MMIF file (that last step is not shown in the figure).
+This pipeline runs on a MMIF file that points to a video document at`/data/video/927364.mp4 ` and a text document at `/data/text/927364.txt `. Those paths do not exist on the local machine from which you run the pipeline script, but they do exist on the server that the MMIF file is sent to as part of an HTTP request. The files `927364.mp4 ` and `927364.txt` do exist on the local machine, but in a different directory. And that directory is mounted to the `/data` directory on the container when we run `docker-compose up -d` which uses the *volumes* specification. Because of that specification, `/data/video/927364.mp4` on the container is the same as `/data/clams/archive/video/927364.mp4` on the local machine. The HHTP request is received by the server, the application code finds the documents on the server, does its thing and then returns a MMIF file (that last step is not shown in the figure).
 
 When the MMIF file is created one has to be aware of what the directory structure on the container is. For simplicity we require that the mount point is always `/data` and we require that the directory we mount is as specified above with subdirectories for the four document types.
 
@@ -263,7 +263,7 @@ $ python run_pipeline.py examples/mmif out-tokenizer
 
 Here we run the pipeline on a directory instead of on a file, in which case the pipeline will apply to all files in the directory. Results will be written to `out-tokenizer`.
 
-We can now follow this up y running Spacy in batch after taking down the containers for the previous step.
+We can now follow this up by running Spacy in batch after taking down the containers for the previous step.
 
 ```bash
 $ docker-compose down
@@ -275,7 +275,7 @@ And now we also have a directory `out-spacy` with results of spacy processing.
 
 #### 3.2.  Running from the pipeline container
 
-This is very much the same as the above, except that we also need to log into the pipeline container. Let's assume we have already started the pipeline. We enter the pipeline container and then do exactly the same thing we did before when we did not run the pipeline from a container.
+This is very much the same as the above, except that we first need to log into the pipeline container. Let's assume we have already started the pipeline. We enter the pipeline container and then do exactly the same thing we did before when we did not run the pipeline from a container.
 
 ```
 $ docker exec -it pipeline bash
@@ -303,10 +303,10 @@ drwxr-xr-x 3 root root    4096 Apr 29 15:44 examples
 Some errors are caught including the following:
 
 - Error generated by the appliction and reported in the view's metadata.
-- Illegal parameters handed in by the pipeline script. These now cause errors and prevent the applicaiton from processsing the input.
+- Illegal parameters handed in by the pipeline script. These now cause errors and prevent the application from processsing the input.
 - A request error raised when the post request is put in.
 
-In all cases the application for which the error happened will return a MMIF object but the view that is added will not have annotaitons but an error message instead. The pipeline will try to continue, that behavior can be overruled by using the `--abort` option when invloking `run_pipeline.py`.
+In all cases the application for which the error happened will return a MMIF object but the view that is added will not have annotations but an error message instead. The pipeline will try to continue, that behavior can be overruled by using the `--abort` option when invloking `run_pipeline.py`.
 
 
 
@@ -323,7 +323,7 @@ pipeline:
 
 services:
   - tokenizer:
-      image: clams-nlp-example:0.0.6
+      image: clams-nlp-example:0.0.7
       container: pipeline_tokenizer
       parameters:
         eol: False
@@ -354,7 +354,7 @@ So you can do things like
 
 ```bash
 --params tokenizer-eol=True
---params tokenizer-eol=True,tokenizer-pretty=True,spacy-linking=False
+--params tokenizer-eol=True,spacy-pretty=True
 ```
 
 The `pretty` parameter can be used for any component and results in the output JSON being pretty printed.

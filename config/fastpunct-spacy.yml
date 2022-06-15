@@ -5,12 +5,11 @@ pipeline:
   container: pipeline
 
 services:
-  - ina:
-      image: clams-ina-segmenter
-      container: pipeline_ina
-  - kaldi:
-      image: clams-kaldi
-      container: pipeline_kaldi
+  - tokenizer:
+      image: clams-fastpunct:0.0.5
+      container: pipeline_fastpunct
   - spacy:
       image: clams-spacy-nlp:0.0.7
       container: pipeline_spacy
+      parameters:
+        pretty: True

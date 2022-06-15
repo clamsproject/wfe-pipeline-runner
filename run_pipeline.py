@@ -1,4 +1,4 @@
-"""pipeline.py
+"""run_pipeline.py
 
 Running a pipeline of CLAMS applications from the command line. Assumes that
 appplications are up and running as Fask services and that they were started
@@ -220,7 +220,7 @@ class Pipeline(object):
                     mmif = mmif_with_error_view(mmif_in, service, error_message)
                     mmif_out = str(mmif_out)
             self._save_intermediate_file(outfile, step, service_name, mmif_out)
-            self.time_elapsed[service.metadata()['identifier']] = time.time() - t0
+            self.time_elapsed[service.identifier()] = time.time() - t0
             if error and error_message is not None and self.verbose:
                 print("    ... Warning, error while running application")
                 print("    ...", error_message)

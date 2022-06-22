@@ -1,7 +1,7 @@
 data: ${PWD}/examples/data
 
 pipeline:
-  image: clams-pipeline:0.2.1
+  image: clams-pipeline:0.1.2
   container: pipeline
 
 services:
@@ -11,7 +11,7 @@ services:
       parameters:
         eol: False
   - spacy:
-      image: clams-spacy-nlp:0.0.7
+      image: clams-spacy-nlp:0.0.8
       container: pipeline_spacy
       parameters:
         pretty: True

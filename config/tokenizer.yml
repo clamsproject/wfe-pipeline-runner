@@ -1,7 +1,7 @@
 data: ${PWD}/examples/data
 
 pipeline:
-  image: clams-pipeline
+  image: clams-pipeline:0.1.2
   container: pipeline
 
 services:

@@ -1,15 +1,15 @@
 data: ${PWD}/examples/data
 
 pipeline:
-  image: clams-pipeline:0.2.1
+  image: clams-pipeline:0.1.2
   container: pipeline
 
 services:
   - tokenizer:
-      image: clams-fastpunct:0.0.5
+      image: clams-fastpunct:0.0.5.dev
       container: pipeline_fastpunct
   - spacy:
-      image: clams-spacy-nlp:0.0.7
+      image: clams-spacy-nlp:0.0.8
       container: pipeline_spacy
       parameters:
         pretty: True

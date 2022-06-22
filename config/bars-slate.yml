@@ -1,0 +1,18 @@
+data: ${PWD}/examples/data
+
+pipeline:
+  image: clams-pipeline:0.1.2
+  container: pipeline
+
+services:
+  - bars:
+      image: clams-barsdetection:0.2.1
+      container: clams_bars_detection
+      parameters:
+        pretty: True
+  - slate:
+      image: clams-slate-detection:0.1.bisbis
+      container: clams_slate_detection
+      parameters:
+        pretty: True
+

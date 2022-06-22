@@ -97,7 +97,7 @@ class Service(object):
                 response = requests.get(self.url)
                 self._metadata = json.loads(response.text)
             except requests.exceptions.ConnectionError as e:
-                print(">>> WARNING: error connecting to %s, returning empty metadata" % url)
+                print(">>> WARNING: error connecting to %s, returning empty metadata" % self.url)
                 self._metadata = {}
         return self._metadata
 
@@ -123,11 +123,11 @@ class Service(object):
             # Could do something more specific for some cases like timeout and others that
             # have an HTTP error code, for all possible exceptions see
             # https://docs.python-requests.org/en/master/_modules/requests/exceptions/
-            print("WARNING: RequestException error connecting to %s, returning input MMIF" % url)
+            print("WARNING: RequestException error connecting to %s, returning input MMIF" % self.url)
             print("WARNING: %s" % e)
             return REQUEST_ERROR, input_string
         except Exception as e:
-            print("WARNING: Exception running service, returning input MMIF" % url)
+            print("WARNING: Exception running service, returning input MMIF" % self.url)
             print("WARNING: %s" % e)
             return PIPELINE_ERROR, input_string
 

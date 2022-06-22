@@ -49,7 +49,7 @@ To start the containers needed for the pipeline we create a configuration file, 
 data: ${PWD}/examples/data
 
 pipeline:
-  image: clams-pipeline:0.2.1
+  image: clams-pipeline:0.1.2
   container: pipeline
 
 services:
@@ -57,7 +57,7 @@ services:
       image: clams-nlp-example:0.0.7
       container: pipeline_tokenizer
   - spacy:
-      image: clams-spacy-nlp:0.0.7
+      image: clams-spacy-nlp:0.0.8
       container: pipeline_spacy
 ```
 
@@ -81,8 +81,8 @@ At that point, all containers are up and all the configuration files needed for 
 ```
 $ docker ps --format " {{.ID}}  {{.Image}}  {{.Names}}  {{.Ports}} "
 97d275be6492  clams-nlp-example:0.0.7	 pipeline_tokenizer  0.0.0.0:5001->5000/tcp
-650e8a414e29  clams-spacy-nlp:0.0.7    pipeline_spacy      0.0.0.0:5002->5000/tcp
-c4b8c9f50899  clams-pipeline:0.2.1     pipeline
+650e8a414e29  clams-spacy-nlp:0.0.8    pipeline_spacy      0.0.0.0:5002->5000/tcp
+c4b8c9f50899  clams-pipeline:0.1.2     pipeline
 ```
 
 Note how the image names and container names for the CLAMS applications and the pipeline code are taken directly from the original configuration file.
@@ -116,7 +116,7 @@ services:
 
   spacy:
     container_name: pipeline_spacy
-    image: clams-spacy-nlp:0.0.7
+    image: clams-spacy-nlp:0.0.8
     volumes:
       - "${PWD}/examples/data:/data"
     ports:
@@ -318,7 +318,7 @@ Application can take parameters and we allow the initial configuration file to i
 data: ${PWD}/examples/data
 
 pipeline:
-  image: clams-pipeline
+  image: clams-pipeline:0.1.2
   container: pipeline
 
 services:
@@ -328,7 +328,7 @@ services:
       parameters:
         eol: False
   - spacy:
-      image: clams-spacy-nlp:0.0.7
+      image: clams-spacy-nlp:0.0.8
       container: pipeline_spacy
       parameters:
         pretty: True
